@@ -18,7 +18,11 @@ import {
   Clock,
   User,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  Menu,
+  Calculator,
+  History,
+  Settings
 } from 'lucide-react';
 
 // Interfaces
@@ -98,6 +102,7 @@ export default function App() {
   const [showExplanation, setShowExplanation] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<string>('');
   const [notif, setNotif] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   // UTC clock update and Initial storage load
   useEffect(() => {
@@ -320,15 +325,65 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0B0D] text-[#E2E8F0] font-sans selection:bg-emerald-500/20 selection:text-emerald-300">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#0b0e11] text-[#eaecef] font-sans selection:bg-[#fcd535]/20 selection:text-[#fcd535]">
       
-      {/* BACKGROUND DECORATIVE SHADOWS (SOPHISTICATED DARK ASPECT) */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-0 left-0 w-[40%] h-[40%] rounded-full bg-emerald-500/3 blur-[140px]" />
-        <div className="absolute bottom-0 right-0 w-[40%] h-[40%] rounded-full bg-rose-500/3 blur-[140px]" />
-      </div>
+      {/* SIDEBAR (BINANCE STYLE) */}
+      <aside 
+        className={`fixed md:relative flex flex-col bg-[#1e2329] border-r border-[#2b3139] transition-all duration-300 z-50 h-full shadow-2xl ${isSidebarOpen ? 'w-64 left-0' : 'w-0 -left-64 md:left-0 md:w-0 overflow-hidden border-r-0'}`}
+      >
+        <div className="h-[76px] flex items-center justify-between px-4 border-b border-[#2b3139]">
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-[#fcd535] rounded-[4px] flex items-center justify-center text-[#181a20] font-bold">B</div>
+            <span className="ml-3 font-bold text-[#eaecef] tracking-widest uppercase whitespace-nowrap">Binance</span>
+          </div>
+          <button onClick={() => setIsSidebarOpen(false)} className="text-[#707a8a] hover:text-[#eaecef] cursor-pointer">
+            <Menu className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <nav className="flex-1 py-4 space-y-2 px-2 overflow-y-auto w-64">
+          <button className={`w-full flex items-center p-3 rounded-[6px] transition-colors justify-start bg-[#2b3139] text-[#fcd535] cursor-pointer`}>
+            <Calculator className="w-5 h-5 flex-shrink-0" />
+            <span className="ml-3 text-[14px] font-medium whitespace-nowrap">Trade Desk</span>
+          </button>
+          
+          <button className={`w-full flex items-center p-3 rounded-[6px] transition-colors justify-start text-[#707a8a] hover:bg-[#2b3139] hover:text-[#eaecef] cursor-pointer`}>
+            <History className="w-5 h-5 flex-shrink-0" />
+            <span className="ml-3 text-[14px] font-medium whitespace-nowrap">History</span>
+          </button>
+        </nav>
+        
+        <div className="p-2 border-t border-[#2b3139] w-64">
+          <button className={`w-full flex items-center p-3 rounded-[6px] transition-colors justify-start text-[#707a8a] hover:bg-[#2b3139] hover:text-[#eaecef] cursor-pointer`}>
+            <Settings className="w-5 h-5 flex-shrink-0" />
+            <span className="ml-3 text-[14px] font-medium whitespace-nowrap">Settings</span>
+          </button>
+        </div>
+      </aside>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 py-6 md:py-10">
+      {/* OVERLAY FOR MOBILE */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* MAIN CONTENT AREA */}
+      <div className="flex-1 overflow-y-auto relative h-full">
+        
+        {/* FLOATING BADGE (HAMBURGER) TO TOGGLE SIDEBAR */}
+        {!isSidebarOpen && (
+          <button 
+            onClick={() => setIsSidebarOpen(true)}
+            className="fixed top-[26px] left-0 z-30 p-2 pl-3 bg-[#1e2329] border-y border-r border-[#2b3139] rounded-r-[8px] text-[#707a8a] hover:text-[#fcd535] hover:bg-[#2b3139] shadow-lg transition-all cursor-pointer"
+            title="Open Menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+        )}
+
+      <div className="relative z-10 max-w-6xl mx-auto px-4 py-6 md:py-10 pl-14 md:pl-16">
         
         {/* TOP STATUS BAR & HEADER */}
         <header className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between border-b border-[#2D3139] pb-5">
@@ -442,95 +497,71 @@ export default function App() {
           <div className="lg:col-span-5 space-y-6" id="panel-inputs">
             
             {/* DIRECTION SEGMENTED SWITCH */}
-            <div className="bg-[#0A0B0D] border border-[#2D3139] p-1 rounded flex shadow-inner">
+            <div className="flex gap-2">
               <button
                 id="btn-long"
                 onClick={() => {
                   setDirection('Long');
-                  // Adjust TP standard preset directionally
                   const preset = ASSET_PRESETS.find(a => a.symbol === selectedAsset);
                   if (preset) setTpPrice(preset.tpLong);
                 }}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-xs font-bold tracking-widest uppercase transition-all duration-200 relative cursor-pointer ${
+                className={`flex-1 py-3 rounded-[6px] text-[14px] font-semibold uppercase transition-all duration-200 cursor-pointer ${
                   direction === 'Long' 
-                    ? 'text-white' 
-                    : 'text-[#475569]/80 hover:text-slate-200'
+                    ? 'bg-[#0ecb81] text-[#ffffff]' 
+                    : 'bg-[#1e2329] text-[#707a8a] hover:text-[#eaecef]'
                 }`}
               >
-                {direction === 'Long' && (
-                  <motion.div 
-                    layoutId="active-direction" 
-                    className="absolute inset-0 bg-[#15181E] border border-[#2D3139] rounded shadow-inner z-0" 
-                    transition={{ type: "spring", stiffness: 350, damping: 28 }}
-                  />
-                )}
-                <span className="relative z-10 flex items-center gap-2">
-                  <TrendingUp className={`w-3.5 h-3.5 ${direction === 'Long' ? 'text-emerald-500' : 'text-emerald-500/50'}`} />
-                  BUY / LONG
-                </span>
+                Buy / Long
               </button>
 
               <button
                 id="btn-short"
                 onClick={() => {
                   setDirection('Short');
-                  // Adjust TP standard preset directionally
                   const preset = ASSET_PRESETS.find(a => a.symbol === selectedAsset);
                   if (preset) setTpPrice(preset.tpShort);
                 }}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-xs font-bold tracking-widest uppercase transition-all duration-200 relative cursor-pointer ${
+                className={`flex-1 py-3 rounded-[6px] text-[14px] font-semibold uppercase transition-all duration-200 cursor-pointer ${
                   direction === 'Short' 
-                    ? 'text-white' 
-                    : 'text-[#475569]/80 hover:text-slate-200'
+                    ? 'bg-[#f6465d] text-[#ffffff]' 
+                    : 'bg-[#1e2329] text-[#707a8a] hover:text-[#eaecef]'
                 }`}
               >
-                {direction === 'Short' && (
-                  <motion.div 
-                    layoutId="active-direction" 
-                    className="absolute inset-0 bg-[#15181E] border border-[#2D3139] rounded shadow-inner z-0" 
-                    transition={{ type: "spring", stiffness: 350, damping: 28 }}
-                  />
-                )}
-                <span className="relative z-10 flex items-center gap-2">
-                  <TrendingDown className={`w-3.5 h-3.5 ${direction === 'Short' ? 'text-rose-500' : 'text-rose-500/50'}`} />
-                  SELL / SHORT
-                </span>
+                Sell / Short
               </button>
             </div>
 
             {/* PARAMETER CARD PANEL */}
-            <div className="bg-[#111419] border border-[#2D3139] p-6 rounded-lg shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-slate-900/40 to-transparent pointer-events-none rounded-tr-lg" />
+            <div className="bg-[#1e2329] border border-[#2b3139] p-6 rounded-[12px] relative overflow-hidden">
               
-              <div className="flex items-center justify-between mb-5 border-b border-[#2D3139]/50 pb-3">
+              <div className="flex items-center justify-between mb-5 border-b border-[#2b3139] pb-3">
                 <div className="flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-emerald-500" />
-                  <h2 className="text-xs font-semibold text-emerald-500 uppercase tracking-widest">Parameter Setup</h2>
+                  <h2 className="text-[16px] font-semibold text-[#eaecef]">Parameter Setup</h2>
                 </div>
                 <button 
                   onClick={() => setShowExplanation(!showExplanation)}
-                  className="text-[#64748B] hover:text-[#E2E8F0] p-1 rounded hover:bg-[#0A0B0D] transition duration-150 cursor-pointer"
+                  className="text-[#707a8a] hover:text-[#eaecef] p-1 rounded transition duration-150 cursor-pointer"
                   title="Tampilkan Info Kalkulasi"
                   id="btn-toggle-info"
                 >
-                  <HelpCircle className="w-4.5 h-4.5 text-[#64748B]" />
+                  <HelpCircle className="w-4.5 h-4.5" />
                 </button>
               </div>
 
-              <div className="space-y-5">
+              <div className="space-y-6">
                 
                 {/* CRYPTO PRESETS TRACK */}
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2">Preset Aset Kripto</label>
+                  <label className="block text-[12px] font-medium text-[#707a8a] mb-2">Preset Aset Kripto</label>
                   <div className="grid grid-cols-5 gap-1.5">
                     {ASSET_PRESETS.map((asset) => (
                       <button
                         key={asset.symbol}
                         onClick={() => handleAssetSelect(asset.symbol)}
-                        className={`py-2 text-xs font-mono font-bold rounded border transition-all duration-200 cursor-pointer ${
+                        className={`py-1.5 text-[12px] font-mono font-medium rounded-[4px] border transition-all duration-200 cursor-pointer ${
                           selectedAsset === asset.symbol
-                            ? 'bg-[#15181E] border-emerald-500/50 text-emerald-500 shadow-sm shadow-emerald-500/5'
-                            : 'bg-[#0A0B0D]/80 border-[#2D3139] text-[#64748B] hover:text-[#E2E8F0] hover:border-[#475569]'
+                            ? 'bg-[#2b3139] border-[#fcd535] text-[#fcd535]'
+                            : 'bg-[#0b0e11] border-[#2b3139] text-[#707a8a] hover:text-[#eaecef]'
                         }`}
                       >
                         {asset.symbol}
@@ -542,12 +573,9 @@ export default function App() {
                 {/* EQUITY INPUT & QUICK ADJUSTS */}
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] flex items-center gap-1">
-                      <DollarSign className="w-3.5 h-3.5 text-emerald-500" /> Equity (USD)
+                    <label className="text-[12px] font-medium text-[#707a8a]">
+                      Avail Balance (USD)
                     </label>
-                    <span className="text-[11px] font-mono font-medium text-[#E2E8F0] bg-[#0A0B0D] border border-[#2D3139] px-2 py-0.5 rounded">
-                      ${equity.toLocaleString()}
-                    </span>
                   </div>
                   <div className="relative">
                     <input 
@@ -555,11 +583,11 @@ export default function App() {
                       id="input-equity"
                       min="10" 
                       max="10000000"
-                      className="w-full bg-[#0A0B0D] border border-[#2D3139] focus:border-emerald-500/80 rounded py-2.5 pl-4 pr-12 text-sm font-semibold text-white outline-none font-mono transition"
+                      className="w-full bg-[#0b0e11] border border-[#2b3139] focus:border-[#3b82f6] rounded-[6px] py-[10px] pl-[16px] pr-[40px] text-[14px] font-medium text-[#eaecef] outline-none font-mono transition"
                       value={equity} 
                       onChange={(e) => setEquity(Math.max(0, Number(e.target.value)))} 
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono text-[#475569]">USD</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] font-medium text-[#707a8a]">USD</span>
                   </div>
                   <div className="grid grid-cols-4 gap-1.5 mt-2">
                     {[1000, 5000, 10000, 25000].map((val) => (
@@ -569,9 +597,9 @@ export default function App() {
                           setEquity(val);
                           triggerNotification(`Equity diset ke $${val.toLocaleString()}`, 'info');
                         }}
-                        className="py-1 text-[10px] font-mono font-semibold rounded bg-[#0A0B0D]/50 border border-[#2D3139] hover:border-[#475569] text-[#94A3B8] hover:bg-[#0A0B0D] hover:text-white transition cursor-pointer"
+                        className="py-1 text-[12px] font-mono font-medium rounded-[4px] bg-[#2b3139] text-[#eaecef] hover:bg-[#3b424d] transition cursor-pointer"
                       >
-                        +${val >= 1000 ? `${val / 1000}k` : val}
+                        ${val >= 1000 ? `${val / 1000}k` : val}
                       </button>
                     ))}
                   </div>
@@ -580,13 +608,13 @@ export default function App() {
                 {/* RISK PERCENTAGE SLIDER */}
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] flex items-center gap-1">
-                      <Percent className="w-3.5 h-3.5 text-[#64748B]" /> Risiko per Trade
+                    <label className="text-[12px] font-medium text-[#707a8a] flex items-center gap-1">
+                      <Percent className="w-3.5 h-3.5 text-[#707a8a]" /> Risiko per Trade
                     </label>
-                    <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded ${
-                      riskPercent <= 1 ? 'bg-emerald-950/40 text-emerald-400 border border-emerald-500/20' :
-                      riskPercent <= 3 ? 'bg-amber-950/40 text-amber-400 border border-amber-500/20' :
-                      'bg-rose-950/40 text-rose-400 border border-rose-500/20'
+                    <span className={`text-[12px] font-mono font-bold px-2 py-0.5 rounded-[4px] ${
+                      riskPercent <= 1 ? 'bg-[#2b3139] text-[#0ecb81] border border-[#2b3139]' :
+                      riskPercent <= 3 ? 'bg-[#2b3139] text-[#fcd535] border border-[#2b3139]' :
+                      'bg-[#2b3139] text-[#f6465d] border border-[#2b3139]'
                     }`}>
                       {riskPercent}% = ${calc.riskUsd.toFixed(2)}
                     </span>
@@ -598,7 +626,7 @@ export default function App() {
                       min="0.1" 
                       max="10" 
                       step="0.1"
-                      className="flex-1 accent-emerald-500 cursor-pointer h-1 bg-[#0A0B0D] rounded appearance-none"
+                      className="flex-1 accent-[#fcd535] cursor-pointer h-1 bg-[#0b0e11] rounded appearance-none"
                       value={riskPercent} 
                       onChange={(e) => setRiskPercent(Number(e.target.value))} 
                     />
@@ -606,7 +634,7 @@ export default function App() {
                       type="number"
                       step="0.1"
                       id="input-risk"
-                      className="w-16 bg-[#0A0B0D] border border-[#2D3139] focus:border-emerald-500 text-center rounded py-1 text-xs font-mono text-white outline-none"
+                      className="w-16 bg-[#0b0e11] border border-[#2b3139] focus:border-[#3b82f6] text-center rounded-[6px] py-1 text-[14px] font-mono text-[#eaecef] outline-none"
                       value={riskPercent}
                       onChange={(e) => setRiskPercent(Math.max(0.1, Math.min(100, Number(e.target.value))))}
                     />
@@ -618,10 +646,10 @@ export default function App() {
                         onClick={() => {
                           setRiskPercent(p);
                         }}
-                        className={`flex-1 py-1 text-[10px] font-mono font-semibold rounded border transition cursor-pointer ${
+                        className={`flex-1 py-1 text-[12px] font-mono font-medium rounded-[4px] border transition cursor-pointer ${
                           riskPercent === p
-                            ? 'bg-[#15181E] border-emerald-500/30 text-emerald-500'
-                            : 'bg-[#0A0B0D]/50 border-[#2D3139] text-[#64748B] hover:text-slate-200 hover:bg-[#0A0B0D]'
+                            ? 'bg-[#2b3139] border-[#fcd535] text-[#fcd535]'
+                            : 'bg-[#0b0e11] border-[#2b3139] text-[#707a8a] hover:text-[#eaecef]'
                         }`}
                       >
                         {p}% Risk
@@ -633,10 +661,10 @@ export default function App() {
                 {/* STOP LOSS DISTANCE SLIDER */}
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] flex items-center gap-1">
-                      <Scale className="w-3.5 h-3.5 text-[#64748B]" /> Jarak Stop Loss (SL)
+                    <label className="text-[12px] font-medium text-[#707a8a] flex items-center gap-1">
+                      <Scale className="w-3.5 h-3.5 text-[#707a8a]" /> Jarak Stop Loss (SL)
                     </label>
-                    <span className="text-[11px] font-mono font-medium text-[#E2E8F0] bg-[#0A0B0D] border border-[#2D3139] px-2 py-0.5 rounded">
+                    <span className="text-[12px] font-mono font-medium text-[#eaecef] bg-[#0b0e11] border border-[#2b3139] px-2 py-0.5 rounded-[4px]">
                       {slPercent}%
                     </span>
                   </div>
@@ -647,7 +675,7 @@ export default function App() {
                       min="0.5" 
                       max="20" 
                       step="0.1"
-                      className="flex-1 accent-emerald-500 cursor-pointer h-1 bg-[#0A0B0D] rounded appearance-none"
+                      className="flex-1 accent-[#fcd535] cursor-pointer h-1 bg-[#0b0e11] rounded appearance-none"
                       value={slPercent} 
                       onChange={(e) => setSlPercent(Number(e.target.value))} 
                     />
@@ -655,7 +683,7 @@ export default function App() {
                       type="number"
                       step="0.1"
                       id="input-sl"
-                      className="w-16 bg-[#0A0B0D] border border-[#2D3139] focus:border-emerald-500 text-center rounded py-1 text-xs font-mono text-white outline-none"
+                      className="w-16 bg-[#0b0e11] border border-[#2b3139] focus:border-[#3b82f6] text-center rounded-[6px] py-1 text-[14px] font-mono text-[#eaecef] outline-none"
                       value={slPercent}
                       onChange={(e) => setSlPercent(Math.max(0.01, Math.min(100, Number(e.target.value))))}
                     />
@@ -667,10 +695,10 @@ export default function App() {
                         onClick={() => {
                           setSlPercent(sl);
                         }}
-                        className={`flex-1 py-1 text-[10px] font-mono font-semibold rounded border transition cursor-pointer ${
+                        className={`flex-1 py-1 text-[12px] font-mono font-medium rounded-[4px] border transition cursor-pointer ${
                           slPercent === sl
-                            ? 'bg-[#15181E] border-emerald-500/30 text-emerald-500'
-                            : 'bg-[#0A0B0D]/50 border-[#2D3139] text-[#64748B] hover:text-slate-200 hover:bg-[#0A0B0D]'
+                            ? 'bg-[#2b3139] border-[#fcd535] text-[#fcd535]'
+                            : 'bg-[#0b0e11] border-[#2b3139] text-[#707a8a] hover:text-[#eaecef]'
                         }`}
                       >
                         {sl}% SL
@@ -682,13 +710,13 @@ export default function App() {
                 {/* LEVERAGE CONTROL WITH MAX LEVERAGE WARNING */}
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Leverage (x)</label>
-                    <span className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded ${
+                    <label className="text-[12px] font-medium text-[#707a8a]">Leverage (x)</label>
+                    <span className={`text-[12px] font-mono font-bold px-2 py-0.5 rounded-[4px] ${
                       calc.isLiqBeforeSl 
-                        ? 'bg-rose-950/80 text-rose-400 border border-rose-500/30 animate-pulse' 
+                        ? 'bg-[#2b3139] text-[#f6465d] border border-[#f6465d]/50 animate-pulse' 
                         : leverage > calc.maxLeverage 
-                        ? 'bg-amber-950/80 text-amber-400 border border-amber-500/30' 
-                        : 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/30'
+                        ? 'bg-[#2b3139] text-[#fcd535] border border-[#fcd535]/50' 
+                        : 'bg-[#2b3139] text-[#0ecb81] border border-[#0ecb81]/50'
                     }`}>
                       {leverage}x
                     </span>
@@ -700,34 +728,34 @@ export default function App() {
                       min="1" 
                       max="125" 
                       step="1"
-                      className="flex-1 accent-emerald-500 cursor-pointer h-1 bg-[#0A0B0D] rounded appearance-none"
+                      className="flex-1 accent-[#fcd535] cursor-pointer h-1 bg-[#0b0e11] rounded appearance-none"
                       value={leverage} 
                       onChange={(e) => setLeverage(Number(e.target.value))} 
                     />
                     <input
                       type="number"
                       id="input-leverage"
-                      className="w-16 bg-[#0A0B0D] border border-[#2D3139] focus:border-emerald-500 text-center rounded py-1 text-xs font-mono text-white outline-none"
+                      className="w-16 bg-[#0b0e11] border border-[#2b3139] focus:border-[#3b82f6] text-center rounded-[6px] py-1 text-[14px] font-mono text-[#eaecef] outline-none"
                       value={leverage}
                       onChange={(e) => setLeverage(Math.max(1, Math.min(150, Number(e.target.value))))}
                     />
                   </div>
                   
                   {/* Buffer max leverage indicators */}
-                  <div className="flex justify-between items-center mt-2.5 bg-[#0A0B0D]/80 p-2.5 rounded border border-[#2D3139] text-[11px] font-mono leading-none">
-                    <span className="text-[#64748B]">Batas Aman (Buffer 1%):</span>
+                  <div className="flex justify-between items-center mt-2.5 bg-[#0b0e11] p-2.5 rounded-[4px] border border-[#2b3139] text-[12px] font-mono leading-none">
+                    <span className="text-[#707a8a]">Batas Aman (Buffer 1%):</span>
                     <button 
                       onClick={() => setLeverage(Math.floor(calc.maxLeverage))}
-                      className="text-amber-500 font-bold hover:underline cursor-pointer bg-transparent border-none"
+                      className="text-[#fcd535] font-bold hover:underline cursor-pointer bg-transparent border-none"
                     >
                       {calc.maxLeverage.toFixed(1)}x
                     </button>
                   </div>
-                  <div className="flex justify-between items-center mt-1 bg-[#0A0B0D]/30 px-2.5 py-1.5 rounded border border-[#2D3139]/30 text-[10px] font-mono leading-none">
-                    <span className="text-[#475569]">Batas Absolut Liq (Limit):</span>
+                  <div className="flex justify-between items-center mt-1 bg-[#0b0e11]/50 px-2.5 py-1.5 rounded-[4px] border border-[#2b3139] text-[11px] font-mono leading-none">
+                    <span className="text-[#707a8a]">Batas Absolut Liq (Limit):</span>
                     <button 
                       onClick={() => setLeverage(Math.floor(calc.absoluteMaxLeverage))}
-                      className="text-rose-500/80 font-bold hover:underline cursor-pointer bg-transparent border-none"
+                      className="text-[#f6465d] font-bold hover:underline cursor-pointer bg-transparent border-none"
                     >
                       {calc.absoluteMaxLeverage.toFixed(1)}x
                     </button>
@@ -735,33 +763,33 @@ export default function App() {
                 </div>
 
                 {/* PRICES CARD FOR ENTRY AND TARGET */}
-                <div className="p-4 bg-[#0A0B0D] rounded border border-[#2D3139] space-y-4">
+                <div className="p-4 bg-[#0b0e11] rounded-[8px] border border-[#2b3139] space-y-4">
                   
                   {/* ENTRY PRICE */}
                   <div>
                     <div className="flex justify-between items-center mb-1">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Entry Price (USD)</label>
+                      <label className="text-[12px] font-medium text-[#707a8a]">Entry Price (USD)</label>
                       <div className="flex gap-1">
                         <button 
                           onClick={() => setEntryPrice(prev => Number((prev * 0.99).toFixed(2)))}
-                          className="px-1.5 py-0.5 text-[9px] font-mono bg-[#111419] rounded border border-[#2D3139] hover:border-[#475569] text-[#94A3B8] cursor-pointer"
+                          className="px-1.5 py-0.5 text-[10px] font-mono bg-[#1e2329] rounded-[4px] border border-[#2b3139] text-[#707a8a] hover:text-[#eaecef] cursor-pointer"
                         >
                           -1%
                         </button>
                         <button 
                           onClick={() => setEntryPrice(prev => Number((prev * 1.01).toFixed(2)))}
-                          className="px-1.5 py-0.5 text-[9px] font-mono bg-[#111419] rounded border border-[#2D3139] hover:border-[#475569] text-[#94A3B8] cursor-pointer"
+                          className="px-1.5 py-0.5 text-[10px] font-mono bg-[#1e2329] rounded-[4px] border border-[#2b3139] text-[#707a8a] hover:text-[#eaecef] cursor-pointer"
                         >
                           +1%
                         </button>
                       </div>
                     </div>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 text-xs">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#707a8a] text-[14px]">$</span>
                       <input 
                         type="number" 
                         id="input-entry-price"
-                        className="w-full bg-[#0A0B0D] border border-[#2D3139] focus:border-emerald-500/80 rounded py-2 pl-7 pr-3 text-sm font-semibold text-white outline-none font-mono"
+                        className="w-full bg-[#1e2329] border border-[#2b3139] focus:border-[#3b82f6] rounded-[6px] py-[8px] pl-[24px] pr-[12px] text-[14px] font-medium text-[#eaecef] outline-none font-mono"
                         value={entryPrice} 
                         onChange={(e) => setEntryPrice(Math.max(0.01, Number(e.target.value)))} 
                       />
@@ -771,31 +799,31 @@ export default function App() {
                   {/* TARGET PRICE (TP) */}
                   <div>
                     <div className="flex justify-between items-center mb-1">
-                      <label className="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Target Price (TP)</label>
-                      <span className="text-[10px] font-mono text-[#475569]">
+                      <label className="text-[12px] font-medium text-[#707a8a]">Target Price (TP)</label>
+                      <span className="text-[11px] font-mono text-[#707a8a]">
                         Rasio saat ini: {(Math.abs(entryPrice - tpPrice) / entryPrice / (slPercent / 100)).toFixed(2)}x
                       </span>
                     </div>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 text-xs">$</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#707a8a] text-[14px]">$</span>
                       <input 
                         type="number" 
                         id="input-tp-price"
-                        className="w-full bg-[#0A0B0D] border border-[#2D3139] focus:border-emerald-500/80 rounded py-2 pl-7 pr-3 text-sm font-semibold text-white outline-none font-mono"
+                        className="w-full bg-[#1e2329] border border-[#2b3139] focus:border-[#3b82f6] rounded-[6px] py-[8px] pl-[24px] pr-[12px] text-[14px] font-medium text-[#eaecef] outline-none font-mono"
                         value={tpPrice} 
                         onChange={(e) => setTpPrice(Math.max(0.01, Number(e.target.value)))} 
                       />
                     </div>
                     
                     {/* Auto-Calculate TP Buttons Based on RRR */}
-                    <div className="mt-2.5">
-                      <p className="text-[10px] text-[#64748B] font-bold mb-1.5 uppercase tracking-wider">Set TP Berdasarkan RRR:</p>
+                    <div className="mt-3">
+                      <p className="text-[11px] text-[#707a8a] font-medium mb-1.5">Set TP Berdasarkan RRR:</p>
                       <div className="grid grid-cols-3 gap-1.5">
                         {[1.5, 2.0, 3.0].map((ratio) => (
                           <button
                             key={ratio}
                             onClick={() => setTpByRrr(ratio)}
-                            className="py-1 text-[10px] font-mono font-bold rounded bg-[#111419] border border-[#2D3139] hover:border-emerald-500/50 hover:text-emerald-500 text-[#94A3B8] transition cursor-pointer"
+                            className="py-1.5 text-[11px] font-mono font-medium rounded-[4px] bg-[#1e2329] border border-[#2b3139] hover:border-[#fcd535] hover:text-[#fcd535] text-[#707a8a] transition cursor-pointer"
                           >
                             Set RRR 1:{ratio.toFixed(1)}
                           </button>
@@ -810,7 +838,7 @@ export default function App() {
                 <button
                   onClick={saveCurrentSetup}
                   id="btn-save-setup"
-                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-[#0A0B0D] font-extrabold text-xs uppercase tracking-widest rounded transition duration-200 flex items-center justify-center gap-2 shadow-md hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                  className="w-full py-3 bg-[#fcd535] hover:bg-[#f0b90b] text-[#181a20] font-bold text-[14px] rounded-[6px] transition duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md cursor-pointer"
                 >
                   <Save className="w-4 h-4" />
                   Simpan Setup Trading
@@ -1413,6 +1441,7 @@ export default function App() {
           )}
         </section>
 
+      </div>
       </div>
     </div>
   );
