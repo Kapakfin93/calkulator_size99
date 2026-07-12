@@ -109,15 +109,13 @@ export default function App() {
     updateTime();
     const interval = setInterval(updateTime, 1000);
 
-    // Local Storage
-    const stored = localStorage.getItem('trade_setups');
-    if (stored) {
-      try {
-        setSavedSetups(JSON.parse(stored));
-      } catch (e) {
-        console.error('Failed to parse saved setups', e);
-      }
-    }
+    // Vercel KV Fetch
+    fetch('/api/get-setups')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setSavedSetups(data);
+      })
+      .catch(e => console.error('Failed to fetch saved setups', e));
 
     return () => clearInterval(interval);
   }, []);
@@ -275,16 +273,24 @@ export default function App() {
 
     const updated = [newSetup, ...savedSetups];
     setSavedSetups(updated);
-    localStorage.setItem('trade_setups', JSON.stringify(updated));
-    triggerNotification('Setup trading berhasil disimpan!', 'success');
+    fetch('/api/save-setups', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setups: updated })
+    }).catch(console.error);
+    triggerNotification('Setup trading berhasil disimpan di Cloud!', 'success');
   };
 
   // Delete saved setup
   const deleteSetup = (id: string) => {
     const updated = savedSetups.filter(s => s.id !== id);
     setSavedSetups(updated);
-    localStorage.setItem('trade_setups', JSON.stringify(updated));
-    triggerNotification('Setup terhapus.', 'info');
+    fetch('/api/save-setups', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ setups: updated })
+    }).catch(console.error);
+    triggerNotification('Setup terhapus dari Cloud.', 'info');
   };
 
   // Load saved setup back into inputs
@@ -302,10 +308,14 @@ export default function App() {
 
   // Clear all saved setups
   const clearAllSetups = () => {
-    if (window.confirm('Hapus semua setup yang disimpan?')) {
+    if (window.confirm('Hapus semua setup yang disimpan dari Cloud?')) {
       setSavedSetups([]);
-      localStorage.removeItem('trade_setups');
-      triggerNotification('Semua setup dihapus.', 'info');
+      fetch('/api/save-setups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ setups: [] })
+      }).catch(console.error);
+      triggerNotification('Semua setup dihapus dari Cloud.', 'info');
     }
   };
 
