@@ -9,9 +9,9 @@ Aplikasi ini membantu trader futures dan derivatif merencanakan manajemen risiko
 
 ---
 
-## 🗺️ Visualisasi Aliran & Code Graph
+## 🗺️ Visualisasi Aliran & Code Graph (3-Layer Orchestrator)
 
-Berikut adalah grafik hubungan kode sumber (Code Graph) yang menggambarkan struktur modularitas proyek:
+Berikut adalah grafik hubungan kode sumber (Code Graph) yang menggambarkan struktur modularitas proyek setelah dilakukan perombakan Arsitektur 3-Layer:
 
 ```text
        [ index.html ] (Browser Viewport)
@@ -20,19 +20,19 @@ Berikut adalah grafik hubungan kode sumber (Code Graph) yang menggambarkan struk
        [ src/main.tsx ] (Entry Point)
               │
               ▼
-       [ src/index.css ] (Global Styling & Typography)
+       [ src/App.tsx ] (Orchestrator) ── Pusat Perakitan Tanpa Logika Bisnis
               │
-              ▼
-       [ src/App.tsx ] (State Engine & Core UI)
+              ├──► 🧠 LOGIC LAYER (Hooks)
+              │       ├─► useRiskCalculator.ts (Matematika & State Kalkulasi)
+              │       ├─► useMarketData.ts     (F&G dan L/S Async Data)
+              │       └─► useSavedSetups.ts    (Persistence / LocalStorage)
               │
-              ├─► State Manajemen (Equity, Risk %, SL %, Leverage, Entry, TP)
-              ├─► Sinkronisasi Kalkulasi Formula Matematika Finansial
-              │
-              ├─► [ Proyeksi Target Fibonacci ] ──► (Bilah Progres Relatif)
-              │
-              └─► [ src/components/RiskRewardChart.tsx ] (Recharts Engine)
-                      ├─► Analisis Kinerja Histori (Nominal USD)
-                      └─► Tren Kelayakan Rasio RRR & Paparan Likuidasi Dini
+              └──► 🎨 UI LAYER (Components) ── Hanya menerima props
+                      ├─► Header.tsx       (Logo & Sentiment Badge)
+                      ├─► Sidebar.tsx      (Menu Navigasi)
+                      ├─► InputPanel.tsx   (Input Parameter)
+                      ├─► OutputPanel.tsx  (Hasil & Fibonacci Gauge)
+                      └─► HistoryPanel.tsx (Daftar Setup Tersimpan)
 ```
 
 ---
