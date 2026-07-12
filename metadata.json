@@ -1,0 +1,6 @@
+{
+  "name": "Terminal Risiko & Position Sizing",
+  "description": "Terminal kalkulasi risiko dan ukuran posisi trading futures dengan proyeksi stop loss, target profit, leverage maksimum, dan harga likuidasi.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

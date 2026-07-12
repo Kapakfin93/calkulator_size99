@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terminal Risiko & Position Sizing (Standalone)</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Playfair Display', 'serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Styling tambahan untuk menyempurnakan visual */
+    body {
+      background-color: #0A0B0D;
+      color: #E2E8F0;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      background: #10B981;
+    }
+    /* Hide scrollbar default tapi tetap scrollable */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen font-sans selection:bg-emerald-500/20 selection:text-emerald-300 relative overflow-x-hidden">
+
+  <!-- BACKGROUND GLOW EFFECTS -->
+  <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <div class="absolute top-0 left-0 w-[40%] h-[40%] rounded-full bg-emerald-500/3 blur-[140px]"></div>
+    <div class="absolute bottom-0 right-0 w-[40%] h-[40%] rounded-full bg-rose-500/3 blur-[140px]"></div>
+  </div>
+
+  <div class="relative z-10 max-w-6xl mx-auto px-4 py-6 md:py-10">
+    
+    <!-- HEADER -->
+    <header class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between border-b border-[#2D3139] pb-5">
+      <div>
+        <div class="flex items-center gap-2 mb-2">
+          <span class="flex h-2 w-2 relative">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <p class="text-[10px] font-mono tracking-widest text-emerald-500 font-bold uppercase">PRO STANDALONE ENGINE</p>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-serif italic font-semibold tracking-wide text-white">
+          Terminal <span class="text-emerald-500 font-sans uppercase text-xs not-italic ml-1.5 opacity-90 tracking-[0.15em] font-bold">Risk Control & Position Sizing</span>
+        </h1>
+        <p class="text-xs text-[#94A3B8] mt-1.5">
+          Versi portabel/standalone ringan untuk langsung dideploy atau digunakan secara offline.
+        </p>
+      </div>
+
+      <div class="mt-4 md:mt-0 flex flex-wrap items-center gap-4 text-xs font-mono bg-[#111419] border border-[#2D3139] rounded px-4 py-2.5">
+        <div class="flex items-center gap-2 text-[#94A3B8]">
+          <i data-lucide="clock" class="w-3.5 h-3.5 text-emerald-500"></i>
+          <span class="font-semibold text-[#E2E8F0]" id="clock-display">UTC 00:00:00</span>
+        </div>
+        <div class="hidden sm:flex items-center gap-2 text-[#94A3B8] border-l border-[#2D3139] pl-4">
+          <i data-lucide="user" class="w-3.5 h-3.5 text-emerald-500/75"></i>
+          <span class="text-xs text-[#94A3B8]" id="user-email-display">User AppSheet</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- NOTIFICATION SYSTEM -->
+    <div id="notification-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- CRITICAL WARNING BANNER -->
+    <div id="liq-warning-banner" class="hidden overflow-hidden mb-6">
+      <div class="bg-gradient-to-r from-rose-950/80 via-red-950/60 to-rose-950/80 border border-rose-500/40 p-5 rounded flex flex-col md:flex-row md:items-center gap-4 shadow-xl">
+        <div class="p-3 bg-rose-500/10 rounded border border-rose-500/20 text-rose-400 self-start md:self-center">
+          <i data-lucide="shield-alert" class="w-8 h-8 animate-pulse"></i>
+        </div>
+        <div class="flex-1">
+          <h3 class="font-bold text-rose-200 tracking-wide text-sm uppercase">
+            Peringatan Kritis: Risiko Likuidasi Sebelum Stop Loss!
+          </h3>
+          <p class="text-xs md:text-sm text-rose-300/95 mt-1 leading-relaxed">
+            Leverage saat ini terlalu tinggi untuk jarak Stop Loss Anda. Harga Likuidasi Isolated akan tercapai sebelum harga Stop Loss, yang menyebabkan Anda kehilangan seluruh margin posisi Anda secara permanen.
+          </p>
+          <div class="mt-3 flex flex-wrap gap-3 items-center">
+            <button id="btn-fix-leverage-limit" class="px-3 py-1 bg-rose-500 hover:bg-rose-600 text-white font-semibold text-xs rounded transition duration-200 shadow-md cursor-pointer">
+              Set ke Limit SL (Absolute)
+            </button>
+            <button id="btn-fix-leverage-safe" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded transition duration-200 shadow-md cursor-pointer">
+              Set ke Batas Aman (Buffer 1%)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CALCULATOR GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-10">
+      
+      <!-- LEFT COLUMN: INPUT PARAMETERS (5 cols) -->
+      <div class="lg:col-span-5 space-y-6">
+        
+        <!-- DIRECTION SWITCH -->
+        <div class="bg-[#0A0B0D] border border-[#2D3139] p-1 rounded flex shadow-inner">
+          <button id="dir-long" class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer bg-[#15181E] text-white border border-[#2D3139] shadow-inner">
+            <i data-lucide="trending-up" class="w-3.5 h-3.5 text-emerald-500"></i>
+            BUY / LONG
+          </button>
+          <button id="dir-short" class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer text-[#475569]/80 hover:text-slate-200">
+            <i data-lucide="trending-down" class="w-3.5 h-3.5 text-rose-500/50"></i>
+            SELL / SHORT
+          </button>
+        </div>
+
+        <!-- PARAMETER SETUPS -->
+        <div class="bg-[#111419] border border-[#2D3139] p-6 rounded shadow-xl relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-slate-900/40 to-transparent pointer-events-none rounded-tr" />
+          
+          <div class="flex items-center justify-between mb-5 border-b border-[#2D3139]/50 pb-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="activity" class="w-4 h-4 text-emerald-500"></i>
+              <h2 class="text-xs font-semibold text-emerald-500 uppercase tracking-widest">Parameter Setup</h2>
+            </div>
+            <button id="btn-toggle-info" class="text-[#64748B] hover:text-[#E2E8F0] p-1 rounded hover:bg-[#0A0B0D] transition duration-150 cursor-pointer" title="Tampilkan Panduan">
+              <i data-lucide="help-circle" class="w-4.5 h-4.5"></i>
+            </button>
+          </div>
+
+          <!-- PANDUAN DAN RUMUS (Collapsible) -->
+          <div id="info-box" class="hidden mb-5 bg-[#0A0B0D] border border-[#2D3139] p-4 rounded text-xs text-[#94A3B8] space-y-2">
+            <h3 class="font-serif italic text-emerald-500 font-bold text-sm">Panduan & Rumus Sizing</h3>
+            <ul class="list-disc pl-4 space-y-1">
+              <li><strong>Max Leverage (Buffer 1%):</strong> <code class="text-amber-500">100 / (SL% + 1)</code>. Buffer 1% menjaga likuidasi agar tidak terpicu akibat slippage market.</li>
+              <li><strong>Risk Nominal:</strong> <code class="text-slate-300">Equity x Risk%</code>. Kerugian bersih maksimal Anda.</li>
+              <li><strong>Position Size:</strong> <code class="text-slate-300">Risk USD / (SL% / 100)</code>. Total kontrak.</li>
+              <li><strong>Harga Likuidasi (Isolated):</strong> Estimasi harga habis margin jaminan berdasarkan leverage terpilih.</li>
+            </ul>
+          </div>
+
+          <div class="space-y-5">
+            
+            <!-- CRYPTO PRESETS -->
+            <div>
+              <label class="block text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-2">Preset Aset Kripto</label>
+              <div class="grid grid-cols-5 gap-1.5" id="presets-container">
+                <!-- Dynamically generated presets -->
+              </div>
+            </div>
+
+            <!-- EQUITY -->
+            <div>
+              <div class="flex justify-between items-center mb-1.5">
+                <label class="text-[10px] font-bold uppercase tracking-wider text-[#64748B] flex items-center gap-1">
+                  <i data-lucide="dollar-sign" class="w-3.5 h-3.5 text-emerald-500"></i> Equity (USD)
+                </label>
+                <span id="equity-badge" class="text-[11px] font-mono font-medium text-[#E2E8F0] bg-[#0A0B0D] border border-[#2D3139] px-2 py-0.5 rounded">$5,000</span>
+              </div>
+              <div class="relative">
+                <input type="number" id="input-equity" value="5000" min="10" max="10000000" class="w-full bg-[#0A0B0D] border border-[#2D3139] focus:border-emerald-500/80 rounded py-2.5 pl-4 pr-12 text-sm font-semibold text-white outline-none font-mono transition">
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono text-[#475569]">USD</span>
+              </div>
+              <div class="grid grid-cols-4 gap-1.5 mt-2">
+                <button type="button" onclick="setEquityVal(1000)" class="py-1 text-[10px] font-mono font-semibold rounded bg-[#0A0B0D]/50 border border-[#2D3139] hover:border-[#475569] text-[#94A3B8] hover:bg-[#0A0B0D] hover:text-white transition cursor-pointer">+$1k</button>
+                <button type="button" onclick="setEquityVal(5000)" class="py-1 text-[10px] font-mono font-semibold rounded bg-[#0A0B0D]/50 border border-[#2D3139] hover:border-[#475569] text-[#94A3B8] hover:bg-[#0A0B0D] hover:text-white transition cursor-pointer">+$5k</button>
+                <button type="button" onclick="setEquityVal(10000)" class="py-1 text-[10px] font-mono font-semibold rounded bg-[#0A0B0D]/50 border border-[#2D3139] hover:border-[#475569] text-[#94A3B8] hover:bg-[#0A0B0D] hover:text-white transition cursor-pointer">+$10k</button>
+                <button type="button" onclick="setEquityVal(25000)" class="py-1 text-[10px] font-mono font-semibold rounded bg-[#0A0B0D]/50 border border-[#2D3139] hover:border-[#475569] text-[#94A3B8] hover:bg-[#0A0B0D] hover:text-white transition cursor-pointer">+$25k</button>
+              </div>
+            </div>
+
+            <!-- RISK PERCENTAGE -->
+            <div>
+              <div class="flex justify-between items-center mb-1.5">
+                <label class="text-[10px] font-bold uppercase tracking-wider text-[#64748B] flex items-center gap-1">
+                  <i data-lucide="percent" class="w-3.5 h-3.5 text-[#64748B]"></i> Risiko per Trade
+                </label>
+                <span id="risk-badge" class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-950/40 text-emerald-400 border border-emerald-500/20">1% = $50.00</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <input type="range" id="range-risk" min="0.1" max="10" step="0.1" value="1" class="flex-1 accent-emerald-500 cursor-pointer h-1 bg-[#0A0B0D] rounded appearance-none">
+                <input type="number" id="input-risk" step="0.1" value="1" class="w-16 bg-[#0A0B0D] border border-[#2D3139] focus:border-emerald-500 text-center rounded py-1 text-xs font-mono text-white outline-none">
+              </div>
+              <div class="flex gap-2 mt-2">
+                <button type="button" onclick="setRiskVal(0.5)" class="flex-1 py-1 text-[10px] font-mono font-semibold rounded border bg-[#0A0B0D]/50 border-[#2D3139] text-[#64748B] hover:text-slate-200 hover:bg-[#0A0B0D] transition cursor-pointer">0.5% Risk</button>
+                <button type="button" onclick="setRiskVal(1.0)" class="flex-1 py-1 text-[10px] font-mono font-semibold rounded border bg-[#0A0B0D]/50 border-[#2D3139] text-[#64748B] hover:text-slate-200 hover:bg-[#0A0B0D] transition cursor-pointer">1.0% Risk</button>
+                <button type="button" onclick="setRiskVal(2.0)" class="flex-1 py-1 text-[10px] font-mono font-semibold rounded border bg-[#0A0B0D]/50 border-[#2D3139] text-[#64748B] hover:text-slate-200 hover:bg-[#0A0B0D] transition cursor-pointer">2.0% Risk</button>
+                <button type="button" onclick="setRiskVal(5.0)" class="flex-1 py-1 text-[10px] font-mono font-semibold rounded border bg-[#0A0B0D]/50 border-[#2D3139] text-[#64748B] hover:text-slate-200 hover:bg-[#0A0B0D] transition cursor-pointer">5.0% Risk</button>
+              </div>
+            </div>
+
+            <!-- STOP LOSS DISTANCE -->
+            <div>
+              <div class="flex justify-between items-center mb-1.5">
+                <label class="text-[10px] font-bold uppercase tracking-wider text-[#64748B] flex items-center gap-1">
+                  <i data-lucide="scale" class="w-3.5 h-3.5 text-[#64748B]"></i> Jarak Stop Loss (SL)
+                </label>
+                <span id="sl-badge" class="text-[11px] font-mono font-medium text-[#E2E8F0] bg-[#0A0B0D] border border-[#2D3139] px-2 py-0.5 rounded">3%</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <input type="range" id="range-sl" min="0.5" max="20" step="0.1" value="3" class="flex-1 accent-emerald-500 cursor-pointer h-1 bg-[#0A0B0D] rounded appearance-none">
+                <input type="number" id="input-sl" step="0.1" value="3" class="w-16 bg-[#0A0B0D] border border-[#2D3139] focus:border-emerald-500 text-center rounded py-1 text-xs font-mono text-white outline-none">
+              </div>
+              <div class="flex gap-2 mt-2">
+                <button type="button" onclick="setSlVal(1)" class="flex-1 py-1 text-[10px] font-mono font-semibold rounded border bg-[#0A0B0D]/50 border-[#2D3139] text-[#64748B] hover:text-slate-200 hover:bg-[#0A0B0D] transition cursor-pointer">1% SL</button>
+                <button type="button" onclick="setSlVal(2)" class="flex-1 py-1 text-[10px] font-mono font-semibold rounded border bg-[#0A0B0D]/50 border-[#2D3139] text-[#64748B] hover:text-slate-200 hover:bg-[#0A0B0D] transition cursor-pointer">2% SL</button>
+                <button type="button" onclick="setSlVal(3)" class="flex-1 py-1 text-[10px] font-mono font-semibold rounded border bg-[#0A0B0D]/50 border-[#2D3139] text-[#64748B] hover:text-slate-200 hover:bg-[#0A0B0D] transition cursor-pointer">3% SL</button>
+                <button type="button" onclick="setSlVal(5)" class="flex-1 py-1 text-[10px] font-mono font-semibold rounded border bg-[#0A0B0D]/50 border-[#2D3139] text-[#64748B] hover:text-slate-200 hover:bg-[#0A0B0D] transition cursor-pointer">5% SL</button>
+              </div>
+            </div>
+
+            <!-- LEVERAGE -->
+            <div>
+              <div class="flex justify-between items-center mb-1.5">
+                <label class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Leverage (x)</label>
+                <span id="leverage-badge" class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-500/30">25x</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <input type="range" id="range-leverage" min="1" max="125" step="1" value="25" class="flex-1 accent-emerald-500 cursor-pointer h-1 bg-[#0A0B0D] rounded appearance-none">
+                <input type="number" id="input-leverage" value="25" class="w-16 bg-[#0A0B0D] border border-[#2D3139] focus:border-emerald-500 text-center rounded py-1 text-xs font-mono text-white outline-none">
+              </div>
+              
+              <div class="flex justify-between items-center mt-2.5 bg-[#0A0B0D]/80 p-2.5 rounded border border-[#2D3139] text-[11px] font-mono leading-none">
+                <span class="text-[#64748B]">Batas Aman (Buffer 1%):</span>
+                <button type="button" id="btn-leverage-limit-safe" class="text-amber-500 font-bold hover:underline bg-transparent border-none">25x</button>
+              </div>
+              <div class="flex justify-between items-center mt-1 bg-[#0A0B0D]/30 px-2.5 py-1.5 rounded border border-[#2D3139]/30 text-[10px] font-mono leading-none">
+                <span class="text-[#475569]">Batas Absolut Liq (Limit):</span>
+                <button type="button" id="btn-leverage-limit-absolute" class="text-rose-500/80 font-bold hover:underline bg-transparent border-none">33.3x</button>
+              </div>
+            </div>
+
+            <!-- PRICES (ENTRY & TP) -->
+            <div class="p-4 bg-[#0A0B0D] rounded border border-[#2D3139] space-y-4">
+              <!-- ENTRY PRICE -->
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <label class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Entry Price (USD)</label>
+                  <div class="flex gap-1">
+                    <button type="button" onclick="adjustEntry(-0.01)" class="px-1.5 py-0.5 text-[9px] font-mono bg-[#111419] rounded border border-[#2D3139] hover:border-[#475569] text-[#94A3B8] cursor-pointer">-1%</button>
+                    <button type="button" onclick="adjustEntry(0.01)" class="px-1.5 py-0.5 text-[9px] font-mono bg-[#111419] rounded border border-[#2D3139] hover:border-[#475569] text-[#94A3B8] cursor-pointer">+1%</button>
+                  </div>
+                </div>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 text-xs">$</span>
+                  <input type="number" id="input-entry-price" value="64000" class="w-full bg-[#0A0B0D] border border-[#2D3139] focus:border-emerald-500/80 rounded py-2 pl-7 pr-3 text-sm font-semibold text-white outline-none font-mono">
+                </div>
+              </div>
+
+              <!-- TARGET PRICE -->
+              <div>
+                <div class="flex justify-between items-center mb-1">
+                  <label class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Target Price (TP)</label>
+                  <span id="current-ratio-label" class="text-[10px] font-mono text-[#475569]">Rasio saat ini: 1.50x</span>
+                </div>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 text-xs">$</span>
+                  <input type="number" id="input-tp-price" value="61000" class="w-full bg-[#0A0B0D] border border-[#2D3139] focus:border-emerald-500/80 rounded py-2 pl-7 pr-3 text-sm font-semibold text-white outline-none font-mono">
+                </div>
+                <div class="mt-2.5">
+                  <p class="text-[10px] text-[#64748B] font-bold mb-1.5 uppercase tracking-wider">Set TP Berdasarkan RRR:</p>
+                  <div class="grid grid-cols-3 gap-1.5">
+                    <button type="button" onclick="setTpByRrr(1.5)" class="py-1 text-[10px] font-mono font-bold rounded bg-[#111419] border border-[#2D3139] hover:border-emerald-500/50 hover:text-emerald-500 text-[#94A3B8] transition cursor-pointer">Set 1:1.5</button>
+                    <button type="button" onclick="setTpByRrr(2.0)" class="py-1 text-[10px] font-mono font-bold rounded bg-[#111419] border border-[#2D3139] hover:border-emerald-500/50 hover:text-emerald-500 text-[#94A3B8] transition cursor-pointer">Set 1:2.0</button>
+                    <button type="button" onclick="setTpByRrr(3.0)" class="py-1 text-[10px] font-mono font-bold rounded bg-[#111419] border border-[#2D3139] hover:border-emerald-500/50 hover:text-emerald-500 text-[#94A3B8] transition cursor-pointer">Set 1:3.0</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <button type="button" id="btn-save-setup" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-[#0A0B0D] font-extrabold text-xs uppercase tracking-widest rounded transition duration-200 flex items-center justify-center gap-2 shadow-md hover:scale-[1.01] active:scale-[0.99] cursor-pointer">
+              <i data-lucide="save" class="w-4 h-4"></i>
+              Simpan Setup Trading
+            </button>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: OUTPUT VIEWPORT (7 cols) -->
+      <div class="lg:col-span-7 space-y-6">
+        
+        <!-- ROW 1: CORE SUMMARY METRICS -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <!-- Position Size -->
+          <div class="bg-[#15181E] border border-[#2D3139] p-5 rounded shadow-md relative overflow-hidden">
+            <div class="absolute top-0 left-0 h-0.5 w-full bg-emerald-500/60"></div>
+            <p class="text-[10px] font-bold text-[#64748B] tracking-widest uppercase mb-1">Position Size</p>
+            <div class="flex items-baseline gap-1.5">
+              <p id="out-position-size" class="text-2xl font-serif font-bold text-white">$1,666.67</p>
+              <p class="text-[10px] text-[#475569] font-mono">USD</p>
+            </div>
+            <p class="text-[10px] text-[#475569] font-mono mt-2">Total Kontrak Posisi</p>
+          </div>
+
+          <!-- Required Margin -->
+          <div class="bg-[#15181E] border border-[#2D3139] p-5 rounded shadow-md relative overflow-hidden">
+            <div class="absolute top-0 left-0 h-0.5 w-full bg-emerald-500/30"></div>
+            <p class="text-[10px] font-bold text-[#64748B] tracking-widest uppercase mb-1">Margin (Isolated)</p>
+            <div class="flex items-baseline gap-1.5">
+              <p id="out-required-margin" class="text-2xl font-serif font-bold text-[#E2E8F0]">$66.67</p>
+              <p class="text-[10px] text-[#475569] font-mono">USD</p>
+            </div>
+            <p class="text-[10px] text-[#475569] font-mono mt-2" id="out-margin-desc">Margin Jaminan (25x)</p>
+          </div>
+
+          <!-- Contract Size in Token -->
+          <div class="bg-[#15181E] border border-[#2D3139] p-5 rounded shadow-md relative overflow-hidden">
+            <div class="absolute top-0 left-0 h-0.5 w-full bg-emerald-500/30"></div>
+            <p class="text-[10px] font-bold text-[#64748B] tracking-widest uppercase mb-1">Ukuran Kontrak</p>
+            <div class="flex items-baseline gap-1.5">
+              <p id="out-contract-size" class="text-2xl font-serif font-bold text-emerald-500">0.02604</p>
+              <p id="out-contract-unit" class="text-[10px] text-emerald-500/75 font-mono uppercase font-bold">BTC</p>
+            </div>
+            <p class="text-[10px] text-[#475569] font-mono mt-2">Volume Unit Kripto</p>
+          </div>
+        </div>
+
+        <!-- ROW 2: TARGET PROJECTIONS side-by-side -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <!-- Stop Loss Card -->
+          <div class="bg-[#1A1214] border border-rose-900/30 p-6 rounded relative overflow-hidden shadow-lg">
+            <div class="absolute top-0 right-0 p-3 opacity-[0.02] text-rose-500 pointer-events-none">
+              <i data-lucide="trending-down" class="w-24 h-24"></i>
+            </div>
+            <div class="flex items-center justify-between mb-3 border-b border-rose-950/40 pb-2">
+              <span class="px-2 py-0.5 bg-rose-500/5 border border-rose-500/20 rounded text-[9px] font-bold text-rose-400 tracking-widest uppercase">Stop Loss Target</span>
+              <span id="proj-sl-percent" class="text-[11px] text-[#64748B] font-mono font-medium">SL 3.0%</span>
+            </div>
+            <p class="text-[10px] text-[#64748B] uppercase font-bold tracking-wider">Harga Eksekusi SL</p>
+            <p id="proj-sl-price" class="text-2xl font-serif font-bold text-white mt-1 mb-4 tracking-tight">$65,920.00</p>
+            
+            <div class="space-y-2 border-t border-rose-950/40 pt-4 text-xs font-mono">
+              <div class="flex justify-between items-center">
+                <span class="text-[#64748B]">Kerugian Bersih:</span>
+                <span id="proj-sl-usd" class="font-bold text-rose-400">-$50.00</span>
+              </div>
+              <div class="flex justify-between items-center pt-2 border-t border-[#2D3139]/30">
+                <span class="text-[#64748B]">Harga Likuidasi:</span>
+                <span id="proj-liq-price" class="font-bold text-[#E2E8F0]">$66,560.00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Take Profit Card -->
+          <div class="bg-[#111A16] border border-emerald-900/30 p-6 rounded relative overflow-hidden shadow-lg">
+            <div class="absolute top-0 right-0 p-3 opacity-[0.02] text-emerald-500 pointer-events-none">
+              <i data-lucide="trending-up" class="w-24 h-24"></i>
+            </div>
+            <div class="flex items-center justify-between mb-3 border-b border-emerald-950/40 pb-2">
+              <span class="px-2 py-0.5 bg-emerald-500/5 border border-emerald-500/20 rounded text-[9px] font-bold text-emerald-400 tracking-widest uppercase">Take Profit Target</span>
+              <span id="proj-tp-percent" class="text-[11px] text-[#64748B] font-mono font-medium">Jarak 4.69%</span>
+            </div>
+            <p class="text-[10px] text-[#64748B] uppercase font-bold tracking-wider">Harga Eksekusi TP</p>
+            <p id="proj-tp-price" class="text-2xl font-serif font-bold text-white mt-1 mb-4 tracking-tight">$61,000.00</p>
+
+            <div class="space-y-2 border-t border-emerald-950/40 pt-4 text-xs font-mono">
+              <div class="flex justify-between items-center">
+                <span class="text-[#64748B]">Profit Bersih:</span>
+                <span id="proj-tp-usd" class="font-bold text-emerald-400">+$78.13</span>
+              </div>
+              <div class="flex justify-between items-center pt-2 border-t border-[#2D3139]/30">
+                <span class="text-[#64748B]">Rasio ROI Kontrak:</span>
+                <span id="proj-tp-roi" class="font-bold text-teal-400">+117.2%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW 3: RRR & VALIDATION -->
+        <div id="validation-card" class="bg-[#111A16] border border-emerald-500/35 p-5 rounded shadow-md">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            
+            <div>
+              <p class="text-[10px] font-bold uppercase tracking-wider text-[#64748B]">Risk/Reward Ratio (RRR)</p>
+              <div class="flex items-baseline gap-2.5 mt-1">
+                <span id="out-rrr-value" class="text-3xl font-serif font-semibold tracking-tight text-emerald-500">1 : 1.56</span>
+                <span class="text-xs text-[#475569] font-mono">(Minimum ideal 1:1.50)</span>
+              </div>
+            </div>
+
+            <div class="sm:text-right">
+              <p class="text-[10px] font-bold uppercase tracking-wider text-[#64748B] mb-1.5">Status Kelayakan</p>
+              <span id="validation-status-badge" class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded text-xs font-bold border border-emerald-500/20 uppercase tracking-wider">
+                ✅ LAYAK EKSEKUSI
+              </span>
+            </div>
+          </div>
+
+          <!-- RRR Visual Meter -->
+          <div class="mt-4 pt-4 border-t border-[#2D3139]/40">
+            <div class="flex justify-between text-[10px] text-[#475569] font-mono mb-1.5">
+              <span>Buruk (&lt;1.0)</span>
+              <span>Sedang (1.0 - 1.5)</span>
+              <span>Sangat Layak (&gt;1.5)</span>
+            </div>
+            <div class="h-2 w-full bg-[#0A0B0D] rounded-full overflow-hidden flex">
+              <div id="rrr-bar-red" class="h-full bg-rose-500 transition-all duration-300" style="width: 33%"></div>
+              <div id="rrr-bar-yellow" class="h-full bg-amber-500 transition-all duration-300" style="width: 16%"></div>
+              <div id="rrr-bar-green" class="h-full bg-emerald-500 transition-all duration-300" style="width: 29%"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SAVED LOG SETUPS TABLE -->
+    <section class="bg-[#111419] border border-[#2D3139] rounded-lg p-6 overflow-hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-[#2D3139]/50 pb-4 mb-4">
+        <div>
+          <h3 class="text-xs font-semibold uppercase tracking-widest text-white flex items-center gap-2">
+            <span class="p-1 rounded bg-[#0A0B0D] border border-[#2D3139]">
+              <i data-lucide="save" class="w-3.5 h-3.5 text-emerald-500"></i>
+            </span>
+            Log Setup Trading Tersimpan
+          </h3>
+          <p class="text-xs text-[#64748B] mt-1.5">
+            Setup disimpan secara aman di memori lokal browser Anda (LocalStorage).
+          </p>
+        </div>
+        <button id="btn-clear-all" class="hidden self-start sm:self-center px-3 py-1.5 bg-[#0A0B0D] hover:bg-rose-950/20 border border-[#2D3139] hover:border-rose-500/30 rounded text-xs font-mono font-medium text-[#94A3B8] hover:text-rose-400 transition flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          Hapus Semua
+        </button>
+      </div>
+
+      <div id="no-saved-setups-view" class="py-10 text-center border border-dashed border-[#2D3139] rounded">
+        <p class="text-sm text-[#64748B]">Belum ada setup trading yang disimpan.</p>
+        <p class="text-xs text-[#475569] mt-1.5">Atur parameter dan klik tombol "Simpan Setup Trading" di panel kiri untuk menyimpan simulasi.</p>
+      </div>
+
+      <div id="saved-setups-table-container" class="hidden overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[700px]">
+          <thead>
+            <tr class="border-b border-[#2D3139] text-[#64748B] uppercase text-[9px] tracking-widest font-bold">
+              <th class="py-3 px-4">Aset / Arah</th>
+              <th class="py-3 px-4">Equity</th>
+              <th class="py-3 px-4">Risiko (USD)</th>
+              <th class="py-3 px-4">Total Posisi</th>
+              <th class="py-3 px-4">Stop Loss (SL)</th>
+              <th class="py-3 px-4">Leverage</th>
+              <th class="py-3 px-4">Target Profit</th>
+              <th class="py-3 px-4 text-center">RRR</th>
+              <th class="py-3 px-4 text-right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="saved-setups-tbody" class="divide-y divide-[#2D3139]/30">
+            <!-- Dynamically populated rows -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="mt-12 pt-6 border-t border-[#2D3139] flex flex-col sm:flex-row justify-between items-center text-[10px] text-[#475569] uppercase tracking-widest gap-4">
+      <p>© 2026 RISK ENGINE V.4.2 — PORTABLE EDITION FOR APPSHEET / LOCAL USE</p>
+      <div class="flex gap-4">
+        <span>Slippage: 0.05%</span>
+        <span>Buffer: Enabled</span>
+        <span class="text-emerald-500/80 font-bold">Offline Ready</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- CORE STANDALONE LOGIC SCRIPT -->
+  <script>
+    // Asset presets
+    const ASSET_PRESETS = [
+      { symbol: 'BTC', name: 'Bitcoin', price: 64000, tpLong: 67200, tpShort: 60800 },
+      { symbol: 'ETH', name: 'Ethereum', price: 3400, tpLong: 3600, tpShort: 3200 },
+      { symbol: 'SOL', name: 'Solana', price: 140, tpLong: 154, tpShort: 126 },
+      { symbol: 'BNB', name: 'BNB Chain', price: 580, tpLong: 620, tpShort: 540 },
+      { symbol: 'CUSTOM', name: 'Custom Asset', price: 1000, tpLong: 1050, tpShort: 950 }
+    ];
+
+    // State
+    let direction = 'Short'; // Long or Short
+    let selectedAsset = 'BTC';
+    let equity = 5000;
+    let riskPercent = 1;
+    let slPercent = 3;
+    let leverage = 25;
+    let entryPrice = 64000;
+    let tpPrice = 61000;
+    let savedSetups = [];
+
+    // Elements
+    const dirLongBtn = document.getElementById('dir-long');
+    const dirShortBtn = document.getElementById('dir-short');
+    const inputEquity = document.getElementById('input-equity');
+    const rangeRisk = document.getElementById('range-risk');
+    const inputRisk = document.getElementById('input-risk');
+    const rangeSl = document.getElementById('range-sl');
+    const inputSl = document.getElementById('input-sl');
+    const rangeLeverage = document.getElementById('range-leverage');
+    const inputLeverage = document.getElementById('input-leverage');
+    const inputEntryPrice = document.getElementById('input-entry-price');
+    const inputTpPrice = document.getElementById('input-tp-price');
+
+    // UI Updates
+    const equityBadge = document.getElementById('equity-badge');
+    const riskBadge = document.getElementById('risk-badge');
+    const slBadge = document.getElementById('sl-badge');
+    const leverageBadge = document.getElementById('leverage-badge');
+    const currentRatioLabel = document.getElementById('current-ratio-label');
+    const btnLeverageLimitSafe = document.getElementById('btn-leverage-limit-safe');
+    const btnLeverageLimitAbsolute = document.getElementById('btn-leverage-limit-absolute');
+
+    // Outputs
+    const outPositionSize = document.getElementById('out-position-size');
+    const outRequiredMargin = document.getElementById('out-required-margin');
+    const outMarginDesc = document.getElementById('out-margin-desc');
+    const outContractSize = document.getElementById('out-contract-size');
+    const outContractUnit = document.getElementById('out-contract-unit');
+
+    const projSlPercent = document.getElementById('proj-sl-percent');
+    const projSlPrice = document.getElementById('proj-sl-price');
+    const projSlUsd = document.getElementById('proj-sl-usd');
+    const projLiqPrice = document.getElementById('proj-liq-price');
+
+    const projTpPercent = document.getElementById('proj-tp-percent');
+    const projTpPrice = document.getElementById('proj-tp-price');
+    const projTpUsd = document.getElementById('proj-tp-usd');
+    const projTpRoi = document.getElementById('proj-tp-roi');
+
+    const outRrrValue = document.getElementById('out-rrr-value');
+    const validationStatusBadge = document.getElementById('validation-status-badge');
+    const validationCard = document.getElementById('validation-card');
+    
+    const rrrBarRed = document.getElementById('rrr-bar-red');
+    const rrrBarYellow = document.getElementById('rrr-bar-yellow');
+    const rrrBarGreen = document.getElementById('rrr-bar-green');
+
+    const liqWarningBanner = document.getElementById('liq-warning-banner');
+
+    // Notification Helper
+    function triggerNotification(message, type = 'success') {
+      const container = document.getElementById('notification-container');
+      const toast = document.createElement('div');
+      toast.className = `p-4 rounded border shadow-xl flex items-center gap-3 max-w-sm pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0`;
+      
+      let icon = 'info';
+      if (type === 'success') {
+        toast.classList.add('bg-emerald-950/90', 'border-emerald-500/50', 'text-emerald-200');
+        icon = 'check-circle-2';
+      } else if (type === 'error') {
+        toast.classList.add('bg-rose-950/90', 'border-rose-500/50', 'text-rose-200');
+        icon = 'shield-alert';
+      } else {
+        toast.classList.add('bg-slate-950/90', 'border-slate-700/80', 'text-slate-200');
+        icon = 'info';
+      }
+
+      toast.innerHTML = `
+        <div class="p-1 rounded-full bg-slate-900/50">
+          <i data-lucide="${icon}" class="w-5 h-5"></i>
+        </div>
+        <p class="text-xs font-medium">${message}</p>
+      `;
+
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      // animate in
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 50);
+
+      // animate out
+      setTimeout(() => {
+        toast.classList.add('translate-y-[-10px]', 'opacity-0');
+        setTimeout(() => {
+          toast.remove();
+        }, 300);
+      }, 4000);
+    }
+
+    // Load Local Storage
+    function loadSavedSetups() {
+      const stored = localStorage.getItem('trade_setups_portable');
+      if (stored) {
+        try {
+          savedSetups = JSON.parse(stored);
+        } catch (e) {
+          console.error('Error parsing stored setups', e);
+        }
+      }
+      renderTable();
+    }
+
+    // Save Setup
+    function saveCurrentSetup() {
+      const newSetup = {
+        id: Math.random().toString(36).substring(2, 9),
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        direction,
+        asset: selectedAsset,
+        equity,
+        riskPercent,
+        slPercent,
+        leverage,
+        entryPrice,
+        tpPrice,
+        positionUsd: Number(outPositionSize.textContent.replace('$', '').replace(/,/g, '')),
+        marginUsd: Number(outRequiredMargin.textContent.replace('$', '').replace(/,/g, '')),
+        riskUsd: equity * (riskPercent / 100),
+        rewardUsd: Number(projTpUsd.textContent.replace('+$', '').replace(/,/g, '')),
+        rrr: parseFloat(outRrrValue.textContent.replace('1 : ', '')),
+        slPrice: Number(projSlPrice.textContent.replace('$', '').replace(/,/g, '')),
+        liqPrice: Number(projLiqPrice.textContent.replace('$', '').replace(/,/g, ''))
+      };
+
+      savedSetups.unshift(newSetup);
+      localStorage.setItem('trade_setups_portable', JSON.stringify(savedSetups));
+      triggerNotification('Setup trading berhasil disimpan!', 'success');
+      renderTable();
+    }
+
+    // Delete setup
+    window.deleteSetup = function(id) {
+      savedSetups = savedSetups.filter(s => s.id !== id);
+      localStorage.setItem('trade_setups_portable', JSON.stringify(savedSetups));
+      triggerNotification('Setup terhapus.', 'info');
+      renderTable();
+    }
+
+    // Load setup back
+    window.loadSetup = function(id) {
+      const s = savedSetups.find(item => item.id === id);
+      if (!s) return;
+
+      direction = s.direction;
+      selectedAsset = s.asset;
+      equity = s.equity;
+      riskPercent = s.riskPercent;
+      slPercent = s.slPercent;
+      leverage = s.leverage;
+      entryPrice = s.entryPrice;
+      tpPrice = s.tpPrice;
+
+      // Sync form elements
+      inputEquity.value = equity;
+      rangeRisk.value = riskPercent;
+      inputRisk.value = riskPercent;
+      rangeSl.value = slPercent;
+      inputSl.value = slPercent;
+      rangeLeverage.value = leverage;
+      inputLeverage.value = leverage;
+      inputEntryPrice.value = entryPrice;
+      inputTpPrice.value = tpPrice;
+
+      // Update Active direction switch classes
+      updateDirectionUI();
+      // Update asset button styling
+      updatePresetSelectionUI();
+
+      calculate();
+      triggerNotification(`Memuat setup ${s.asset} (${s.direction})`, 'info');
+    }
+
+    // Clear setups
+    document.getElementById('btn-clear-all').addEventListener('click', () => {
+      if (confirm('Hapus semua setup yang disimpan?')) {
+        savedSetups = [];
+        localStorage.removeItem('trade_setups_portable');
+        triggerNotification('Semua setup dihapus.', 'info');
+        renderTable();
+      }
+    });
+
+    // Render Table HTML
+    function renderTable() {
+      const tableContainer = document.getElementById('saved-setups-table-container');
+      const emptyView = document.getElementById('no-saved-setups-view');
+      const tbody = document.getElementById('saved-setups-tbody');
+      const clearBtn = document.getElementById('btn-clear-all');
+
+      if (savedSetups.length === 0) {
+        tableContainer.classList.add('hidden');
+        emptyView.classList.remove('hidden');
+        clearBtn.classList.add('hidden');
+        return;
+      }
+
+      tableContainer.classList.remove('hidden');
+      emptyView.classList.add('hidden');
+      clearBtn.classList.remove('hidden');
+      tbody.innerHTML = '';
+
+      savedSetups.forEach(setup => {
+        const setupIsLiqFirst = setup.leverage > (100 / setup.slPercent);
+        let statusBadge = '';
+        
+        if (setupIsLiqFirst) {
+          statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#1A1214] border border-rose-500/20 text-rose-400">1:${setup.rrr.toFixed(2)}</span>`;
+        } else if (setup.rrr >= 1.5) {
+          statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#111A16] border border-emerald-500/20 text-emerald-500">1:${setup.rrr.toFixed(2)}</span>`;
+        } else {
+          statusBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-[#191511] border border-amber-500/20 text-amber-500">1:${setup.rrr.toFixed(2)}</span>`;
+        }
+
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-[#15181E]/40 transition group';
+        row.innerHTML = `
+          <td class="py-3.5 px-4 font-sans">
+            <div class="flex items-center gap-2.5">
+              <span class="inline-flex items-center justify-center w-5 h-5 rounded-full text-[9px] font-bold ${
+                setup.direction === 'Long' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+              }">
+                ${setup.direction === 'Long' ? 'L' : 'S'}
+              </span>
+              <div>
+                <span class="font-serif italic font-semibold text-white tracking-wide">${setup.asset}</span>
+                <span class="text-[9px] text-[#475569] block font-mono">${setup.timestamp}</span>
+              </div>
+            </div>
+          </td>
+          <td class="py-3.5 px-4 text-[#94A3B8] font-mono text-xs">$${setup.equity.toLocaleString()}</td>
+          <td class="py-3.5 px-4 text-rose-400 font-mono text-xs">-$${setup.riskUsd.toFixed(1)} <span class="text-[9px] text-[#475569]">(${setup.riskPercent}%)</span></td>
+          <td class="py-3.5 px-4 text-white font-semibold font-mono text-xs">$${setup.positionUsd.toLocaleString(undefined, { maximumFractionDigits: 1 })}</td>
+          <td class="py-3.5 px-4 font-mono text-xs">
+            <span class="text-[#E2E8F0] block">$${setup.slPrice.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}</span>
+            <span class="text-[10px] text-[#475569] block">Jarak: ${setup.slPercent}%</span>
+          </td>
+          <td class="py-3.5 px-4">
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold border ${
+              setupIsLiqFirst ? 'bg-[#1A1214] border-rose-500/20 text-rose-400' : 'bg-[#0A0B0D] border-[#2D3139] text-[#64748B]'
+            }">${setup.leverage}x</span>
+          </td>
+          <td class="py-3.5 px-4 text-emerald-500 font-semibold font-mono text-xs">$${setup.tpPrice.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 })}</td>
+          <td class="py-3.5 px-4 text-center font-mono text-xs">${statusBadge}</td>
+          <td class="py-3.5 px-4">
+            <div class="flex items-center justify-end gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+              <button onclick="loadSetup('${setup.id}')" class="p-1.5 bg-[#0A0B0D] border border-[#2D3139] hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-400 rounded text-[#64748B] transition cursor-pointer" title="Muat Setup">
+                <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+              </button>
+              <button onclick="deleteSetup('${setup.id}')" class="p-1.5 bg-[#0A0B0D] border border-[#2D3139] hover:bg-rose-500/10 hover:border-rose-500/30 hover:text-rose-400 rounded text-[#64748B] transition cursor-pointer" title="Hapus">
+                <i data-lucide="trash-2" class="w-3 h-3"></i>
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+      lucide.createIcons();
+    }
+
+    // Core Calculations
+    function calculate() {
+      const safeSlPercent = Math.max(0.01, slPercent);
+      const safeLeverage = Math.max(1, leverage);
+      const safeEntryPrice = Math.max(0.01, entryPrice);
+
+      // 1. Max Leverage (Buffer 1% Rule) & Limit
+      const maxLeverage = 100 / (safeSlPercent + 1);
+      const absoluteMaxLeverage = 100 / safeSlPercent;
+
+      btnLeverageLimitSafe.textContent = `${maxLeverage.toFixed(1)}x`;
+      btnLeverageLimitAbsolute.textContent = `${absoluteMaxLeverage.toFixed(1)}x`;
+
+      // 2. Risk Nominal (USD)
+      const riskUsd = equity * (riskPercent / 100);
+
+      // 3. Position Size & Margin
+      const positionUsd = riskUsd / (safeSlPercent / 100);
+      const marginUsd = positionUsd / safeLeverage;
+      const contractBtc = positionUsd / safeEntryPrice;
+
+      // 4. Harga Stop Loss
+      const slPrice = direction === 'Long'
+        ? safeEntryPrice - (safeEntryPrice * (safeSlPercent / 100))
+        : safeEntryPrice + (safeEntryPrice * (safeSlPercent / 100));
+
+      // 5. Harga Likuidasi (Isolated Margin)
+      const liqPrice = direction === 'Long'
+        ? safeEntryPrice * (1 - (1 / safeLeverage))
+        : safeEntryPrice * (1 + (1 / safeLeverage));
+
+      // 6. Reward & RRR
+      const tpDistance = Math.abs(safeEntryPrice - tpPrice) / safeEntryPrice;
+      const rewardUsd = positionUsd * tpDistance;
+      const rrr = tpDistance / (safeSlPercent / 100);
+
+      // Checking danger liquidation before Stop Loss
+      const isLiqBeforeSl = safeLeverage > absoluteMaxLeverage;
+
+      // Update badges
+      equityBadge.textContent = `$${equity.toLocaleString()}`;
+      riskBadge.textContent = `${riskPercent}% = $${riskUsd.toFixed(2)}`;
+      slBadge.textContent = `${slPercent}%`;
+      leverageBadge.textContent = `${leverage}x`;
+      currentRatioLabel.textContent = `Rasio saat ini: ${rrr.toFixed(2)}x`;
+
+      if (isLiqBeforeSl) {
+        leverageBadge.className = 'text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-rose-950/80 text-rose-400 border border-rose-500/30 animate-pulse';
+      } else if (leverage > maxLeverage) {
+        leverageBadge.className = 'text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-amber-950/80 text-amber-400 border border-amber-500/30';
+      } else {
+        leverageBadge.className = 'text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-500/30';
+      }
+
+      // Update Outputs
+      outPositionSize.textContent = `$${positionUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      outRequiredMargin.textContent = `$${marginUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      outMarginDesc.textContent = `Jaminan yang dikunci (${leverage}x)`;
+      outContractSize.textContent = contractBtc.toLocaleString(undefined, { minimumFractionDigits: 5, maximumFractionDigits: 5 });
+      outContractUnit.textContent = selectedAsset === 'CUSTOM' ? 'UNIT' : selectedAsset;
+
+      // Update Stop Loss projections
+      projSlPercent.textContent = `SL ${slPercent.toFixed(1)}%`;
+      projSlPrice.textContent = `$${slPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      projSlUsd.textContent = `-$${riskUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      projLiqPrice.textContent = `$${liqPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      
+      if (isLiqBeforeSl) {
+        projLiqPrice.className = 'font-bold text-rose-400 underline decoration-rose-500/70 decoration-dotted animate-pulse';
+      } else {
+        projLiqPrice.className = 'font-bold text-[#E2E8F0]';
+      }
+
+      // Update Take Profit projections
+      projTpPercent.textContent = `Jarak ${(tpDistance * 100).toFixed(2)}%`;
+      projTpPrice.textContent = `$${tpPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      projTpUsd.textContent = `+$${rewardUsd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      projTpRoi.textContent = `+${(rewardUsd / marginUsd * 100).toFixed(1)}%`;
+
+      // Update RRR Meter and validation card status
+      outRrrValue.textContent = `1 : ${rrr.toFixed(2)}`;
+
+      if (isLiqBeforeSl) {
+        validationCard.className = 'bg-[#1A1214] border border-rose-500/30 p-5 rounded shadow-md';
+        validationStatusBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 bg-rose-500/10 text-rose-400 rounded text-xs font-bold border border-rose-500/20 uppercase tracking-wider';
+        validationStatusBadge.textContent = '⚠️ BAHAYA: LIKUIDASI DULUAN';
+        outRrrValue.className = 'text-3xl font-serif font-semibold tracking-tight text-rose-400';
+      } else if (rrr >= 1.5) {
+        validationCard.className = 'bg-[#111A16] border border-emerald-500/35 p-5 rounded shadow-md';
+        validationStatusBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded text-xs font-bold border border-emerald-500/20 uppercase tracking-wider';
+        validationStatusBadge.textContent = '✅ LAYAK EKSEKUSI';
+        outRrrValue.className = 'text-3xl font-serif font-semibold tracking-tight text-emerald-500';
+      } else {
+        validationCard.className = 'bg-[#191511] border border-amber-500/30 p-5 rounded shadow-md';
+        validationStatusBadge.className = 'inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-400 rounded text-xs font-bold border border-amber-500/20 uppercase tracking-wider';
+        validationStatusBadge.textContent = '❌ RRR TERLALU RENDAH';
+        outRrrValue.className = 'text-3xl font-serif font-semibold tracking-tight text-amber-500';
+      }
+
+      // RRR Visual Bar lengths
+      const maxRange = 3.0;
+      const redPercent = Math.min(100, (Math.min(rrr, 1.0) / maxRange) * 100);
+      const yellowPercent = Math.min(100, (Math.max(0, Math.min(rrr, 1.5) - 1.0) / maxRange) * 100);
+      const greenPercent = Math.min(100, (Math.max(0, rrr - 1.5) / maxRange) * 100);
+
+      rrrBarRed.style.width = `${redPercent}%`;
+      rrrBarYellow.style.width = `${yellowPercent}%`;
+      rrrBarGreen.style.width = `${greenPercent}%`;
+
+      // Trigger critical warning banner visibility
+      if (isLiqBeforeSl) {
+        liqWarningBanner.classList.remove('hidden');
+      } else {
+        liqWarningBanner.classList.add('hidden');
+      }
+    }
+
+    // Direction switcher
+    dirLongBtn.addEventListener('click', () => {
+      direction = 'Long';
+      dirLongBtn.className = 'flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer bg-[#15181E] text-white border border-[#2D3139] shadow-inner';
+      dirShortBtn.className = 'flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer text-[#475569]/80 hover:text-slate-200';
+      
+      const preset = ASSET_PRESETS.find(a => a.symbol === selectedAsset);
+      if (preset) tpPrice = preset.tpLong;
+      inputTpPrice.value = tpPrice;
+
+      updateDirectionUI();
+      calculate();
+    });
+
+    dirShortBtn.addEventListener('click', () => {
+      direction = 'Short';
+      dirShortBtn.className = 'flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer bg-[#15181E] text-white border border-[#2D3139] shadow-inner';
+      dirLongBtn.className = 'flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer text-[#475569]/80 hover:text-slate-200';
+      
+      const preset = ASSET_PRESETS.find(a => a.symbol === selectedAsset);
+      if (preset) tpPrice = preset.tpShort;
+      inputTpPrice.value = tpPrice;
+
+      updateDirectionUI();
+      calculate();
+    });
+
+    function updateDirectionUI() {
+      if (direction === 'Long') {
+        dirLongBtn.className = 'flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer bg-[#15181E] text-white border border-[#2D3139] shadow-inner';
+        dirShortBtn.className = 'flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer text-[#475569]/80 hover:text-slate-200';
+      } else {
+        dirShortBtn.className = 'flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer bg-[#15181E] text-white border border-[#2D3139] shadow-inner';
+        dirLongBtn.className = 'flex-1 flex items-center justify-center gap-2 py-2.5 rounded text-xs font-bold tracking-widest uppercase transition-all duration-200 cursor-pointer text-[#475569]/80 hover:text-slate-200';
+      }
+    }
+
+    // Toggle info collapsible
+    document.getElementById('btn-toggle-info').addEventListener('click', () => {
+      const infoBox = document.getElementById('info-box');
+      infoBox.classList.toggle('hidden');
+    });
+
+    // Preset Selection UI Generation
+    function buildPresets() {
+      const container = document.getElementById('presets-container');
+      container.innerHTML = '';
+      
+      ASSET_PRESETS.forEach(asset => {
+        const btn = document.createElement('button');
+        btn.id = `preset-${asset.symbol}`;
+        btn.className = `py-2 text-xs font-mono font-bold rounded border transition-all duration-200 cursor-pointer`;
+        btn.textContent = asset.symbol;
+        
+        btn.addEventListener('click', () => {
+          selectedAsset = asset.symbol;
+          entryPrice = asset.price;
+          tpPrice = direction === 'Long' ? asset.tpLong : asset.tpShort;
+
+          inputEntryPrice.value = entryPrice;
+          inputTpPrice.value = tpPrice;
+
+          updatePresetSelectionUI();
+          calculate();
+          triggerNotification(`Aset diubah ke ${asset.symbol}. Entry & TP diperbarui.`, 'info');
+        });
+
+        container.appendChild(btn);
+      });
+      updatePresetSelectionUI();
+    }
+
+    function updatePresetSelectionUI() {
+      ASSET_PRESETS.forEach(asset => {
+        const btn = document.getElementById(`preset-${asset.symbol}`);
+        if (!btn) return;
+
+        if (selectedAsset === asset.symbol) {
+          btn.className = 'py-2 text-xs font-mono font-bold rounded border transition-all duration-200 cursor-pointer bg-[#15181E] border-emerald-500/50 text-emerald-500 shadow-sm shadow-emerald-500/5';
+        } else {
+          btn.className = 'py-2 text-xs font-mono font-bold rounded border transition-all duration-200 cursor-pointer bg-[#0A0B0D]/80 border-[#2D3139] text-[#64748B] hover:text-[#E2E8F0] hover:border-[#475569]';
+        }
+      });
+    }
+
+    // Slider range helpers
+    window.setEquityVal = function(val) {
+      equity = val;
+      inputEquity.value = val;
+      calculate();
+      triggerNotification(`Equity diset ke $${val.toLocaleString()}`, 'info');
+    }
+
+    window.setRiskVal = function(val) {
+      riskPercent = val;
+      rangeRisk.value = val;
+      inputRisk.value = val;
+      calculate();
+    }
+
+    window.setSlVal = function(val) {
+      slPercent = val;
+      rangeSl.value = val;
+      inputSl.value = val;
+      calculate();
+    }
+
+    window.adjustEntry = function(factor) {
+      entryPrice = Number((entryPrice * (1 + factor)).toFixed(2));
+      inputEntryPrice.value = entryPrice;
+      calculate();
+    }
+
+    window.setTpByRrr = function(targetRrr) {
+      const safeSlPercent = Math.max(0.01, slPercent);
+      const changePercent = (safeSlPercent * targetRrr) / 100;
+      
+      let targetTp = entryPrice;
+      if (direction === 'Long') {
+        targetTp = entryPrice * (1 + changePercent);
+      } else {
+        targetTp = entryPrice * (1 - changePercent);
+      }
+      
+      tpPrice = Number(targetTp.toFixed(2));
+      inputTpPrice.value = tpPrice;
+      calculate();
+      triggerNotification(`Target Profit disesuaikan untuk mencapai RRR 1 : ${targetRrr}`, 'success');
+    }
+
+    // Input Listeners
+    inputEquity.addEventListener('input', (e) => {
+      equity = Math.max(0, Number(e.target.value));
+      calculate();
+    });
+
+    rangeRisk.addEventListener('input', (e) => {
+      riskPercent = Number(e.target.value);
+      inputRisk.value = riskPercent;
+      calculate();
+    });
+    inputRisk.addEventListener('input', (e) => {
+      riskPercent = Math.max(0.1, Math.min(100, Number(e.target.value)));
+      rangeRisk.value = riskPercent;
+      calculate();
+    });
+
+    rangeSl.addEventListener('input', (e) => {
+      slPercent = Number(e.target.value);
+      inputSl.value = slPercent;
+      calculate();
+    });
+    inputSl.addEventListener('input', (e) => {
+      slPercent = Math.max(0.01, Math.min(100, Number(e.target.value)));
+      rangeSl.value = slPercent;
+      calculate();
+    });
+
+    rangeLeverage.addEventListener('input', (e) => {
+      leverage = Number(e.target.value);
+      inputLeverage.value = leverage;
+      calculate();
+    });
+    inputLeverage.addEventListener('input', (e) => {
+      leverage = Math.max(1, Math.min(150, Number(e.target.value)));
+      rangeLeverage.value = leverage;
+      calculate();
+    });
+
+    inputEntryPrice.addEventListener('input', (e) => {
+      entryPrice = Math.max(0.01, Number(e.target.value));
+      calculate();
+    });
+    inputTpPrice.addEventListener('input', (e) => {
+      tpPrice = Math.max(0.01, Number(e.target.value));
+      calculate();
+    });
+
+    // Leverage warning actions
+    document.getElementById('btn-fix-leverage-limit').addEventListener('click', () => {
+      const absoluteMaxLeverage = 100 / Math.max(0.01, slPercent);
+      leverage = Math.floor(absoluteMaxLeverage);
+      rangeLeverage.value = leverage;
+      inputLeverage.value = leverage;
+      calculate();
+      triggerNotification(`Leverage diturunkan ke limit absolut ${leverage}x`, 'info');
+    });
+
+    document.getElementById('btn-fix-leverage-safe').addEventListener('click', () => {
+      const maxLeverage = 100 / (Math.max(0.01, slPercent) + 1);
+      leverage = Math.floor(maxLeverage);
+      rangeLeverage.value = leverage;
+      inputLeverage.value = leverage;
+      calculate();
+      triggerNotification(`Leverage diset ke batas aman buffer ${leverage}x`, 'success');
+    });
+
+    document.getElementById('btn-leverage-limit-safe').addEventListener('click', () => {
+      const maxLeverage = 100 / (Math.max(0.01, slPercent) + 1);
+      leverage = Math.floor(maxLeverage);
+      rangeLeverage.value = leverage;
+      inputLeverage.value = leverage;
+      calculate();
+    });
+
+    document.getElementById('btn-leverage-limit-absolute').addEventListener('click', () => {
+      const absoluteMaxLeverage = 100 / Math.max(0.01, slPercent);
+      leverage = Math.floor(absoluteMaxLeverage);
+      rangeLeverage.value = leverage;
+      inputLeverage.value = leverage;
+      calculate();
+    });
+
+    document.getElementById('btn-save-setup').addEventListener('click', saveCurrentSetup);
+
+    // Initializations
+    buildPresets();
+    loadSavedSetups();
+    calculate();
+
+    // UTC Clock
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+      document.getElementById('clock-display').textContent = timeStr;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>
