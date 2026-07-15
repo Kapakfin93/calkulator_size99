@@ -29,7 +29,7 @@ export function useMarketData() {
       
       setCurrentTime(`${dateMap.year}-${dateMap.month}-${dateMap.day} ${dateMap.hour}:${dateMap.minute}:${dateMap.second} WIB`);
       
-      const hour = parseInt(dateMap.hour, 10);
+      const hour = Number.parseInt(dateMap.hour, 10);
       let session = "Sydney (Low Volatility)";
       if (hour >= 20 && hour <= 23) session = "New York & London Overlap (High Volatility 🔥)";
       else if (hour >= 20 || hour < 4) session = "New York Session (US Market 🇺🇸)";
