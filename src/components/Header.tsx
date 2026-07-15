@@ -37,10 +37,12 @@ export default function Header({ currentTime, marketSession, marketSentiment, lu
           </p>
         </div>
 
-        <div className="mt-4 md:mt-0 flex flex-wrap items-center gap-4 text-xs font-mono bg-[#111419] border border-[#2D3139] rounded px-4 py-2.5">
+        {/* Status Indicators Row */}
+        <div className="mt-4 md:mt-0 flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-mono">
           {marketSentiment && (
             <>
-              <div className="flex items-center gap-2 text-[#94A3B8]">
+              {/* Badge 1: Fear & Greed */}
+              <div className="flex items-center gap-2 text-[#94A3B8] bg-[#111419] border border-[#2D3139] rounded px-3 py-2">
                 <Activity className={`w-3.5 h-3.5 ${
                   Number(marketSentiment.fngValue) <= 45 ? 'text-rose-500' : Number(marketSentiment.fngValue) >= 55 ? 'text-emerald-500' : 'text-amber-500'
                 }`} />
@@ -49,10 +51,14 @@ export default function Header({ currentTime, marketSession, marketSentiment, lu
                   Number(marketSentiment.fngValue) <= 45 ? 'text-rose-500' : Number(marketSentiment.fngValue) >= 55 ? 'text-emerald-500' : 'text-amber-500'
                 }`}>
                   {marketSentiment.fngLabel} 
-                  {Number(marketSentiment.fngValue) <= 45 ? '(Down)' : Number(marketSentiment.fngValue) >= 55 ? '(Up)' : ''}
+                  <span className="hidden sm:inline">
+                    {Number(marketSentiment.fngValue) <= 45 ? '(Down)' : Number(marketSentiment.fngValue) >= 55 ? '(Up)' : ''}
+                  </span>
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-[#94A3B8] border-l border-[#2D3139] px-4">
+
+              {/* Badge 2: L/S Ratio */}
+              <div className="flex items-center gap-2 text-[#94A3B8] bg-[#111419] border border-[#2D3139] rounded px-3 py-2">
                 {Number(marketSentiment.lsRatio) > 1 ? (
                   <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
                 ) : (
@@ -60,11 +66,16 @@ export default function Header({ currentTime, marketSession, marketSentiment, lu
                 )}
                 <span className="font-semibold text-[#E2E8F0]">L/S {marketSentiment.lsRatio}</span>
                 <span className={`text-[10px] uppercase font-bold ${Number(marketSentiment.lsRatio) > 1 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                  {Number(marketSentiment.lsRatio) > 1 ? '(Long Heavy)' : '(Short Heavy)'}
+                  <span className="hidden sm:inline">
+                    {Number(marketSentiment.lsRatio) > 1 ? '(Long Heavy)' : '(Short Heavy)'}
+                  </span>
+                  <span className="inline sm:hidden">
+                    {Number(marketSentiment.lsRatio) > 1 ? '(L)' : '(S)'}
+                  </span>
                 </span>
               </div>
               
-              {/* Astronacci Lunar Phase Indicator */}
+              {/* Badge 3: Lunar Phase Button */}
               {lunarData && (
                 <div className="relative">
                   <button 
@@ -72,20 +83,18 @@ export default function Header({ currentTime, marketSession, marketSentiment, lu
                       setShowLunarDropdown(!showLunarDropdown);
                       setShowSentimentModal(false);
                     }}
-                    className={`flex items-center gap-1.5 border-l border-[#2D3139] px-4 cursor-pointer hover:text-white transition-colors text-left outline-none ${
-                      lunarData.isReversalZone ? 'text-amber-400' : 'text-[#94A3B8]'
+                    className={`flex items-center gap-1.5 bg-[#111419] border border-[#2D3139] rounded px-3 py-2 cursor-pointer hover:text-white transition-colors text-left outline-none ${
+                      lunarData.isReversalZone ? 'text-amber-400 border-amber-500/35' : 'text-[#94A3B8]'
                     }`}
                     title="Detail Fase Bulan"
                   >
                     <span className="text-sm">{lunarData.icon}</span>
-                    <div className="flex flex-col">
-                      <span className="font-semibold leading-none">{lunarData.phaseName}</span>
-                      {lunarData.isReversalZone && (
-                        <span className="text-[9px] uppercase font-bold mt-1 text-amber-500 animate-pulse">
-                          ⚠️ Reversal Zone
-                        </span>
-                      )}
-                    </div>
+                    <span className="font-semibold leading-none">{lunarData.phaseName}</span>
+                    {lunarData.isReversalZone && (
+                      <span className="text-[9px] uppercase font-bold text-amber-500 animate-pulse hidden sm:inline ml-1">
+                        ⚠️ Reversal
+                      </span>
+                    )}
                   </button>
 
                   {/* Lunar Dropdown Panel */}
@@ -95,7 +104,7 @@ export default function Header({ currentTime, marketSession, marketSentiment, lu
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
-                        className="absolute right-0 top-full mt-3 z-50 w-72 bg-[#1e2329] border border-[#2D3139] p-5 rounded-xl shadow-2xl space-y-4"
+                        className="absolute right-[-80px] sm:right-0 top-full mt-3 z-50 w-[280px] sm:w-72 bg-[#1e2329] border border-[#2D3139] p-5 rounded-xl shadow-2xl space-y-4"
                       >
                         <div className="flex items-center justify-between border-b border-[#2b3139] pb-2">
                           <h4 className="text-[11px] font-bold text-white uppercase tracking-wider">Detail Siklus Lunar</h4>
@@ -145,7 +154,7 @@ export default function Header({ currentTime, marketSession, marketSentiment, lu
                         {/* Reversal zone alert text inside dropdown */}
                         {lunarData.isReversalZone && (
                           <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-lg text-[10px] leading-relaxed">
-                            ⚠️ <strong>Reversal Zone Aktif:</strong> Probabilitas pembalikan tren pasar meningkat. Disarankan waspada volatilitas.
+                            ⚠️ <strong>Reversal Zone Hack:</strong> Probabilitas pembalikan tren pasar meningkat. Disarankan waspada volatilitas.
                           </div>
                         )}
                       </motion.div>
@@ -154,20 +163,24 @@ export default function Header({ currentTime, marketSession, marketSentiment, lu
                 </div>
               )}
               
-              {/* Info Button for Sentiment Conclusion */}
-              <button 
-                onClick={() => {
-                  setShowSentimentModal(!showSentimentModal);
-                  setShowLunarDropdown(false);
-                }}
-                className={`p-1.5 rounded-[4px] border transition-colors cursor-pointer ${showSentimentModal ? 'bg-[#fcd535]/10 border-[#fcd535]/30 text-[#fcd535]' : 'bg-[#2b3139] border-[#2D3139] text-[#707a8a] hover:text-[#eaecef]'}`}
-                title="Lihat Kesimpulan Sentimen"
-              >
-                <Info className="w-4 h-4" />
-              </button>
+              {/* Badge 5: Info Button for Sentiment Conclusion */}
+              <div className="bg-[#111419] border border-[#2D3139] rounded p-1.5 flex items-center">
+                <button 
+                  onClick={() => {
+                    setShowSentimentModal(!showSentimentModal);
+                    setShowLunarDropdown(false);
+                  }}
+                  className={`p-1 rounded-[4px] border transition-colors cursor-pointer ${showSentimentModal ? 'bg-[#fcd535]/10 border-[#fcd535]/30 text-[#fcd535]' : 'bg-[#2b3139] border-[#2D3139] text-[#707a8a] hover:text-[#eaecef]'}`}
+                  title="Lihat Kesimpulan Sentimen"
+                >
+                  <Info className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </>
           )}
-          <div className={`hidden sm:flex items-center gap-2 text-[#94A3B8] ${marketSentiment ? 'border-l border-[#2D3139] pl-4' : ''}`}>
+          
+          {/* Badge 4: Clock */}
+          <div className="hidden sm:flex items-center gap-2 text-[#94A3B8] bg-[#111419] border border-[#2D3139] rounded px-3 py-2">
             <Clock className="w-3.5 h-3.5 text-[#FCD535]" />
             <div className="flex flex-col">
               <span className="font-semibold text-[#E2E8F0] leading-none">{currentTime || 'UTC'}</span>
