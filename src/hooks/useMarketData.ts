@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 
 export interface MarketSentiment {
-  fngValue: string;
-  fngLabel: string;
-  lsRatio: string;
+  fngValue: string | null;
+  fngLabel: string | null;
+  lsRatio: string | null;
 }
 
 export function useMarketData() {
@@ -41,21 +41,24 @@ export function useMarketData() {
     updateTime();
     const interval = setInterval(updateTime, 1000);
 
-    // Fetch Market Sentiment
-    Promise.all([
-      fetch('https://api.alternative.me/fng/?limit=1').then(res => res.json()),
-      fetch('https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol=BTCUSDT&period=1d&limit=1').then(res => res.json())
-    ]).then(([fngData, lsData]) => {
-      const fng = fngData?.data?.[0];
-      const ls = lsData?.[0];
-      if (fng && ls) {
-        setMarketSentiment({
-          fngValue: fng.value,
-          fngLabel: fng.value_classification,
-          lsRatio: Number(ls.longShortRatio).toFixed(2)
-        });
-      }
-    }).catch(e => console.error('Failed to fetch sentiment', e));
+    // Fetch Market Sentiment (independent fetches to bypass network censorship or offline failures)
+    const fetchFng = fetch('https://api.alternative.me/fng/?limit=1')
+      .then(res => res.json())
+      .then(data => data?.data?.[0])
+      .catch(() => null);
+
+    const fetchLs = fetch('https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol=BTCUSDT&period=1d&limit=1')
+      .then(res => res.json())
+      .then(data => data?.[0])
+      .catch(() => null);
+
+    Promise.all([fetchFng, fetchLs]).then(([fng, ls]) => {
+      setMarketSentiment({
+        fngValue: fng ? fng.value : null,
+        fngLabel: fng ? fng.value_classification : null,
+        lsRatio: ls ? Number(ls.longShortRatio).toFixed(2) : null
+      });
+    });
 
     return () => clearInterval(interval);
   }, []);

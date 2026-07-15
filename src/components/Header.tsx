@@ -39,144 +39,146 @@ export default function Header({ currentTime, marketSession, marketSentiment, lu
 
         {/* Status Indicators Row */}
         <div className="mt-4 md:mt-0 flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-mono">
-          {marketSentiment && (
-            <>
-              {/* Badge 1: Fear & Greed */}
-              <div className="flex items-center gap-2 text-[#94A3B8] bg-[#111419] border border-[#2D3139] rounded px-3 py-2">
-                <Activity className={`w-3.5 h-3.5 ${
-                  Number(marketSentiment.fngValue) <= 45 ? 'text-rose-500' : Number(marketSentiment.fngValue) >= 55 ? 'text-emerald-500' : 'text-amber-500'
-                }`} />
-                <span className="font-semibold text-[#E2E8F0]">{marketSentiment.fngValue}</span>
-                <span className={`text-[10px] uppercase font-bold flex items-center gap-1 ${
-                  Number(marketSentiment.fngValue) <= 45 ? 'text-rose-500' : Number(marketSentiment.fngValue) >= 55 ? 'text-emerald-500' : 'text-amber-500'
-                }`}>
-                  {marketSentiment.fngLabel} 
-                  <span className="hidden sm:inline">
-                    {Number(marketSentiment.fngValue) <= 45 ? '(Down)' : Number(marketSentiment.fngValue) >= 55 ? '(Up)' : ''}
-                  </span>
+          {/* Badge 1: Fear & Greed */}
+          {marketSentiment?.fngValue && (
+            <div className="flex items-center gap-2 text-[#94A3B8] bg-[#111419] border border-[#2D3139] rounded px-3 py-2">
+              <Activity className={`w-3.5 h-3.5 ${
+                Number(marketSentiment.fngValue) <= 45 ? 'text-rose-500' : Number(marketSentiment.fngValue) >= 55 ? 'text-emerald-500' : 'text-amber-500'
+              }`} />
+              <span className="font-semibold text-[#E2E8F0]">{marketSentiment.fngValue}</span>
+              <span className={`text-[10px] uppercase font-bold flex items-center gap-1 ${
+                Number(marketSentiment.fngValue) <= 45 ? 'text-rose-500' : Number(marketSentiment.fngValue) >= 55 ? 'text-emerald-500' : 'text-amber-500'
+              }`}>
+                {marketSentiment.fngLabel} 
+                <span className="hidden sm:inline">
+                  {Number(marketSentiment.fngValue) <= 45 ? '(Down)' : Number(marketSentiment.fngValue) >= 55 ? '(Up)' : ''}
                 </span>
-              </div>
+              </span>
+            </div>
+          )}
 
-              {/* Badge 2: L/S Ratio */}
-              <div className="flex items-center gap-2 text-[#94A3B8] bg-[#111419] border border-[#2D3139] rounded px-3 py-2">
-                {Number(marketSentiment.lsRatio) > 1 ? (
-                  <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
-                ) : (
-                  <TrendingDown className="w-3.5 h-3.5 text-rose-500" />
-                )}
-                <span className="font-semibold text-[#E2E8F0]">L/S {marketSentiment.lsRatio}</span>
-                <span className={`text-[10px] uppercase font-bold ${Number(marketSentiment.lsRatio) > 1 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                  <span className="hidden sm:inline">
-                    {Number(marketSentiment.lsRatio) > 1 ? '(Long Heavy)' : '(Short Heavy)'}
-                  </span>
-                  <span className="inline sm:hidden">
-                    {Number(marketSentiment.lsRatio) > 1 ? '(L)' : '(S)'}
-                  </span>
-                </span>
-              </div>
-              
-              {/* Badge 3: Lunar Phase Button */}
-              {lunarData && (
-                <div className="relative">
-                  <button 
-                    onClick={() => {
-                      setShowLunarDropdown(!showLunarDropdown);
-                      setShowSentimentModal(false);
-                    }}
-                    className={`flex items-center gap-1.5 bg-[#111419] border border-[#2D3139] rounded px-3 py-2 cursor-pointer hover:text-white transition-colors text-left outline-none ${
-                      lunarData.isReversalZone ? 'text-amber-400 border-amber-500/35' : 'text-[#94A3B8]'
-                    }`}
-                    title="Detail Fase Bulan"
-                  >
-                    <span className="text-sm">{lunarData.icon}</span>
-                    <span className="font-semibold leading-none">{lunarData.phaseName}</span>
-                    {lunarData.isReversalZone && (
-                      <span className="text-[9px] uppercase font-bold text-amber-500 animate-pulse hidden sm:inline ml-1">
-                        ⚠️ Reversal
-                      </span>
-                    )}
-                  </button>
-
-                  {/* Lunar Dropdown Panel */}
-                  <AnimatePresence>
-                    {showLunarDropdown && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="absolute right-[-80px] sm:right-0 top-full mt-3 z-50 w-[280px] sm:w-72 bg-[#1e2329] border border-[#2D3139] p-5 rounded-xl shadow-2xl space-y-4"
-                      >
-                        <div className="flex items-center justify-between border-b border-[#2b3139] pb-2">
-                          <h4 className="text-[11px] font-bold text-white uppercase tracking-wider">Detail Siklus Lunar</h4>
-                          <span className="px-1.5 py-0.5 bg-[#0b0e11] text-[#707a8a] text-[8px] font-bold rounded">ASTRONACCI</span>
-                        </div>
-
-                        <div className="flex items-center gap-3.5 bg-[#0b0e11] p-3 rounded-lg border border-[#2b3139]/40">
-                          {/* Moon Icon with pulsing glow */}
-                          <div className="relative w-12 h-12 rounded-full bg-[#181a20] border border-[#2b3139] flex items-center justify-center text-2xl shrink-0">
-                            <div className={`absolute inset-0 rounded-full blur-[6px] opacity-20 ${
-                              lunarData.isReversalZone ? 'bg-amber-400' : 'bg-blue-400'
-                            }`} />
-                            <span className="relative z-10">{lunarData.icon}</span>
-                          </div>
-
-                          {/* Phase details */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-baseline justify-between gap-1 mb-1">
-                              <span className="font-bold text-xs text-white truncate">{lunarData.phaseName}</span>
-                              <span className="text-[9px] font-mono text-[#707a8a] shrink-0">{lunarData.cyclePercent}%</span>
-                            </div>
-                            <div className="h-1.5 w-full bg-[#1e2329] rounded-full overflow-hidden">
-                              <div 
-                                className={`h-full rounded-full ${
-                                  lunarData.isReversalZone ? 'bg-amber-500 animate-pulse' : 'bg-slate-400'
-                                }`}
-                                style={{ width: `${lunarData.cyclePercent}%` }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Countdown Grid */}
-                        <div className="grid grid-cols-2 gap-2.5">
-                          <div className="bg-[#0b0e11]/80 border border-[#2b3139] p-2.5 rounded-lg flex flex-col justify-between">
-                            <span className="text-[8px] font-mono font-bold text-amber-500 uppercase tracking-widest block mb-0.5">FULL MOON</span>
-                            <div className="text-[11px] font-bold text-white leading-tight">{lunarData.daysToFullMoon} hari lagi</div>
-                            <span className="text-[9px] text-[#707a8a] font-mono mt-0.5">{lunarData.fullMoonDateStr}</span>
-                          </div>
-                          <div className="bg-[#0b0e11]/80 border border-[#2b3139] p-2.5 rounded-lg flex flex-col justify-between">
-                            <span className="text-[8px] font-mono font-bold text-slate-300 uppercase tracking-widest block mb-0.5">NEW MOON</span>
-                            <div className="text-[11px] font-bold text-white leading-tight">{lunarData.daysToNewMoon} hari lagi</div>
-                            <span className="text-[9px] text-[#707a8a] font-mono mt-0.5">{lunarData.newMoonDateStr}</span>
-                          </div>
-                        </div>
-
-                        {/* Reversal zone alert text inside dropdown */}
-                        {lunarData.isReversalZone && (
-                          <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-lg text-[10px] leading-relaxed">
-                            ⚠️ <strong>Reversal Zone Hack:</strong> Probabilitas pembalikan tren pasar meningkat. Disarankan waspada volatilitas.
-                          </div>
-                        )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+          {/* Badge 2: L/S Ratio */}
+          {marketSentiment?.lsRatio && (
+            <div className="flex items-center gap-2 text-[#94A3B8] bg-[#111419] border border-[#2D3139] rounded px-3 py-2">
+              {Number(marketSentiment.lsRatio) > 1 ? (
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+              ) : (
+                <TrendingDown className="w-3.5 h-3.5 text-rose-500" />
               )}
-              
-              {/* Badge 5: Info Button for Sentiment Conclusion */}
-              <div className="bg-[#111419] border border-[#2D3139] rounded p-1.5 flex items-center">
-                <button 
-                  onClick={() => {
-                    setShowSentimentModal(!showSentimentModal);
-                    setShowLunarDropdown(false);
-                  }}
-                  className={`p-1 rounded-[4px] border transition-colors cursor-pointer ${showSentimentModal ? 'bg-[#fcd535]/10 border-[#fcd535]/30 text-[#fcd535]' : 'bg-[#2b3139] border-[#2D3139] text-[#707a8a] hover:text-[#eaecef]'}`}
-                  title="Lihat Kesimpulan Sentimen"
-                >
-                  <Info className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </>
+              <span className="font-semibold text-[#E2E8F0]">L/S {marketSentiment.lsRatio}</span>
+              <span className={`text-[10px] uppercase font-bold ${Number(marketSentiment.lsRatio) > 1 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                <span className="hidden sm:inline">
+                  {Number(marketSentiment.lsRatio) > 1 ? '(Long Heavy)' : '(Short Heavy)'}
+                </span>
+                <span className="inline sm:hidden">
+                  {Number(marketSentiment.lsRatio) > 1 ? '(L)' : '(S)'}
+                </span>
+              </span>
+            </div>
+          )}
+          
+          {/* Badge 3: Lunar Phase Button */}
+          {lunarData && (
+            <div className="relative">
+              <button 
+                onClick={() => {
+                  setShowLunarDropdown(!showLunarDropdown);
+                  setShowSentimentModal(false);
+                }}
+                className={`flex items-center gap-1.5 bg-[#111419] border border-[#2D3139] rounded px-3 py-2 cursor-pointer hover:text-white transition-colors text-left outline-none ${
+                  lunarData.isReversalZone ? 'text-amber-400 border-amber-500/35' : 'text-[#94A3B8]'
+                }`}
+                title="Detail Fase Bulan"
+              >
+                <span className="text-sm">{lunarData.icon}</span>
+                <span className="font-semibold leading-none">{lunarData.phaseName}</span>
+                {lunarData.isReversalZone && (
+                  <span className="text-[9px] uppercase font-bold text-amber-500 animate-pulse hidden sm:inline ml-1">
+                    ⚠️ Reversal
+                  </span>
+                )}
+              </button>
+
+              {/* Lunar Dropdown Panel */}
+              <AnimatePresence>
+                {showLunarDropdown && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute right-[-80px] sm:right-0 top-full mt-3 z-50 w-[280px] sm:w-72 bg-[#1e2329] border border-[#2D3139] p-5 rounded-xl shadow-2xl space-y-4"
+                  >
+                    <div className="flex items-center justify-between border-b border-[#2b3139] pb-2">
+                      <h4 className="text-[11px] font-bold text-white uppercase tracking-wider">Detail Siklus Lunar</h4>
+                      <span className="px-1.5 py-0.5 bg-[#0b0e11] text-[#707a8a] text-[8px] font-bold rounded">ASTRONACCI</span>
+                    </div>
+
+                    <div className="flex items-center gap-3.5 bg-[#0b0e11] p-3 rounded-lg border border-[#2b3139]/40">
+                      {/* Moon Icon with pulsing glow */}
+                      <div className="relative w-12 h-12 rounded-full bg-[#181a20] border border-[#2b3139] flex items-center justify-center text-2xl shrink-0">
+                        <div className={`absolute inset-0 rounded-full blur-[6px] opacity-20 ${
+                          lunarData.isReversalZone ? 'bg-amber-400' : 'bg-blue-400'
+                        }`} />
+                        <span className="relative z-10">{lunarData.icon}</span>
+                      </div>
+
+                      {/* Phase details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline justify-between gap-1 mb-1">
+                          <span className="font-bold text-xs text-white truncate">{lunarData.phaseName}</span>
+                          <span className="text-[9px] font-mono text-[#707a8a] shrink-0">{lunarData.cyclePercent}%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-[#1e2329] rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full rounded-full ${
+                              lunarData.isReversalZone ? 'bg-amber-500 animate-pulse' : 'bg-slate-400'
+                            }`}
+                            style={{ width: `${lunarData.cyclePercent}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Countdown Grid */}
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div className="bg-[#0b0e11]/80 border border-[#2b3139] p-2.5 rounded-lg flex flex-col justify-between">
+                        <span className="text-[8px] font-mono font-bold text-amber-500 uppercase tracking-widest block mb-0.5">FULL MOON</span>
+                        <div className="text-[11px] font-bold text-white leading-tight">{lunarData.daysToFullMoon} hari lagi</div>
+                        <span className="text-[9px] text-[#707a8a] font-mono mt-0.5">{lunarData.fullMoonDateStr}</span>
+                      </div>
+                      <div className="bg-[#0b0e11]/80 border border-[#2b3139] p-2.5 rounded-lg flex flex-col justify-between">
+                        <span className="text-[8px] font-mono font-bold text-slate-300 uppercase tracking-widest block mb-0.5">NEW MOON</span>
+                        <div className="text-[11px] font-bold text-white leading-tight">{lunarData.daysToNewMoon} hari lagi</div>
+                        <span className="text-[9px] text-[#707a8a] font-mono mt-0.5">{lunarData.newMoonDateStr}</span>
+                      </div>
+                    </div>
+
+                    {/* Reversal zone alert text inside dropdown */}
+                    {lunarData.isReversalZone && (
+                      <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-lg text-[10px] leading-relaxed">
+                        ⚠️ <strong>Reversal Zone Hack:</strong> Probabilitas pembalikan tren pasar meningkat. Disarankan waspada volatilitas.
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+          
+          {/* Badge 5: Info Button for Sentiment Conclusion */}
+          {(marketSentiment?.fngValue || marketSentiment?.lsRatio) && (
+            <div className="bg-[#111419] border border-[#2D3139] rounded p-1.5 flex items-center">
+              <button 
+                onClick={() => {
+                  setShowSentimentModal(!showSentimentModal);
+                  setShowLunarDropdown(false);
+                }}
+                className={`p-1 rounded-[4px] border transition-colors cursor-pointer ${showSentimentModal ? 'bg-[#fcd535]/10 border-[#fcd535]/30 text-[#fcd535]' : 'bg-[#2b3139] border-[#2D3139] text-[#707a8a] hover:text-[#eaecef]'}`}
+                title="Lihat Kesimpulan Sentimen"
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
+            </div>
           )}
           
           {/* Badge 4: Clock */}
@@ -200,8 +202,8 @@ export default function Header({ currentTime, marketSession, marketSentiment, lu
             className="mb-8 p-5 bg-[#1e2329] border border-[#2D3139] rounded-xl shadow-2xl relative overflow-hidden"
           >
             {(() => {
-              const fng = Number(marketSentiment.fngValue);
-              const ls = Number(marketSentiment.lsRatio);
+              const fng = Number(marketSentiment.fngValue || 50);
+              const ls = Number(marketSentiment.lsRatio || 1.0);
               let title = "Kondisi Pasar: Netral / Sideways";
               let desc = "Tidak ada indikasi sentimen yang ekstrem. Lanjutkan analisis teknikal biasa.";
               let color = "text-[#94A3B8]";
