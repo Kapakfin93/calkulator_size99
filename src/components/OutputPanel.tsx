@@ -456,7 +456,7 @@ export default function OutputPanel({ calc, fib, gauge, direction, entryPrice, s
                       TP Aktif ({directionalRrr >= 0 ? `1:${calc.rrr?.toFixed(1)}` : 'Rugi'})
                     </div>
                     {/* Glowing vertical needle */}
-                    <div className="w-0.5 h-5 bg-gradient-to-b from-emerald-400 to-emerald-500" />
+                    <div className="w-0.5 h-5 bg-linear-to-b from-emerald-400 to-emerald-500" />
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 -mt-0.5 border border-[#0A0B0D] animate-ping absolute top-[15px]" />
                   </div>
                 </div>

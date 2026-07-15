@@ -24,19 +24,19 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
         
         <nav className="flex-1 py-4 space-y-2 px-2 overflow-y-auto w-64">
           <button className={`w-full flex items-center p-3 rounded-[6px] transition-colors justify-start bg-[#2b3139] text-[#fcd535] cursor-pointer`}>
-            <Calculator className="w-5 h-5 flex-shrink-0" />
+            <Calculator className="w-5 h-5 shrink-0" />
             <span className="ml-3 text-[14px] font-medium whitespace-nowrap">Trade Desk</span>
           </button>
           
           <button className={`w-full flex items-center p-3 rounded-[6px] transition-colors justify-start text-[#707a8a] hover:bg-[#2b3139] hover:text-[#eaecef] cursor-pointer`}>
-            <History className="w-5 h-5 flex-shrink-0" />
+            <History className="w-5 h-5 shrink-0" />
             <span className="ml-3 text-[14px] font-medium whitespace-nowrap">History</span>
           </button>
         </nav>
         
         <div className="p-2 border-t border-[#2b3139] w-64">
           <button className={`w-full flex items-center p-3 rounded-[6px] transition-colors justify-start text-[#707a8a] hover:bg-[#2b3139] hover:text-[#eaecef] cursor-pointer`}>
-            <Settings className="w-5 h-5 flex-shrink-0" />
+            <Settings className="w-5 h-5 shrink-0" />
             <span className="ml-3 text-[14px] font-medium whitespace-nowrap">Settings</span>
           </button>
         </div>
