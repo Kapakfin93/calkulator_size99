@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { TrendingUp, TrendingDown, ShieldAlert, CheckCircle2, Save, Trash2, Info, RefreshCw, HelpCircle, Menu, Percent, Scale } from 'lucide-react';
+import { TrendingUp, TrendingDown, Info, Scale } from 'lucide-react';
 
 export default function OutputPanel({ calc, fib, gauge, direction, entryPrice, slPercent, tpPrice, setTpPrice, triggerNotification, showExplanation, leverage, setLeverage, selectedAsset, lunarData }: any) {
   const { tp1: fibTp1Price, tp2: fibTp2Price, tp3: fibTp3Price, r1: fibTp1Reward, r2: fibTp2Reward, r3: fibTp3Reward } = fib || {};
