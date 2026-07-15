@@ -2,8 +2,8 @@ import React from 'react';
 import { Menu, Calculator, History, Settings } from 'lucide-react';
 
 interface SidebarProps {
-  isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
+  readonly isOpen: boolean;
+  readonly setIsOpen: (open: boolean) => void;
 }
 
 export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
@@ -44,9 +44,10 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
       {/* OVERLAY FOR MOBILE */}
       {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+        <button 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden border-none outline-none w-full h-full cursor-default"
           onClick={() => setIsOpen(false)}
+          aria-label="Close sidebar"
         />
       )}
     </>
