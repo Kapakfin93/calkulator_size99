@@ -182,7 +182,7 @@ export default function Header({ currentTime, marketSession, marketSentiment, lu
           )}
           
           {/* Badge 4: Clock */}
-          <div className="hidden sm:flex items-center gap-2 text-[#94A3B8] bg-[#111419] border border-[#2D3139] rounded px-3 py-2">
+          <div className="flex items-center gap-2 text-[#94A3B8] bg-[#111419] border border-[#2D3139] rounded px-3 py-2">
             <Clock className="w-3.5 h-3.5 text-[#FCD535]" />
             <div className="flex flex-col">
               <span className="font-semibold text-[#E2E8F0] leading-none">{currentTime || 'UTC'}</span>
