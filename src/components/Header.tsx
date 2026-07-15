@@ -5,17 +5,36 @@ import { MarketSentiment } from '../hooks/useMarketData';
 import { LunarPhaseData } from '../hooks/useLunarPhase';
 
 interface HeaderProps {
-  currentTime: string;
-  marketSession?: string;
-  marketSentiment: MarketSentiment | null;
-  lunarData?: LunarPhaseData | null;
-  isSidebarOpen?: boolean;
-  setIsSidebarOpen?: (isOpen: boolean) => void;
+  readonly currentTime: string;
+  readonly marketSession?: string;
+  readonly marketSentiment: MarketSentiment | null;
+  readonly lunarData?: LunarPhaseData | null;
+  readonly isSidebarOpen?: boolean;
+  readonly setIsSidebarOpen?: (isOpen: boolean) => void;
 }
 
 export default function Header({ currentTime, marketSession, marketSentiment, lunarData, isSidebarOpen, setIsSidebarOpen }: HeaderProps) {
   const [showSentimentModal, setShowSentimentModal] = useState<boolean>(false);
   const [showLunarDropdown, setShowLunarDropdown] = useState<boolean>(false);
+
+  // Precomputed values for clean JSX and reduced complexity
+  const fngVal = marketSentiment?.fngValue ? Number(marketSentiment.fngValue) : 50;
+  
+  let fngColor = 'text-amber-500';
+  let fngDirection = '';
+  if (fngVal <= 45) {
+    fngColor = 'text-rose-500';
+    fngDirection = '(Down)';
+  } else if (fngVal >= 55) {
+    fngColor = 'text-emerald-500';
+    fngDirection = '(Up)';
+  }
+
+  const lsVal = marketSentiment?.lsRatio ? Number(marketSentiment.lsRatio) : 1.0;
+  const isLongHeavy = lsVal > 1;
+  const lsColor = isLongHeavy ? 'text-emerald-500' : 'text-rose-500';
+  const lsLabelDesktop = isLongHeavy ? '(Long Heavy)' : '(Short Heavy)';
+  const lsLabelMobile = isLongHeavy ? '(L)' : '(S)';
 
   return (
     <>
@@ -42,17 +61,15 @@ export default function Header({ currentTime, marketSession, marketSentiment, lu
           {/* Badge 1: Fear & Greed */}
           {marketSentiment?.fngValue && (
             <div className="flex items-center gap-2 text-[#94A3B8] bg-[#111419] border border-[#2D3139] rounded px-3 py-2">
-              <Activity className={`w-3.5 h-3.5 ${
-                Number(marketSentiment.fngValue) <= 45 ? 'text-rose-500' : Number(marketSentiment.fngValue) >= 55 ? 'text-emerald-500' : 'text-amber-500'
-              }`} />
+              <Activity className={`w-3.5 h-3.5 ${fngColor}`} />
               <span className="font-semibold text-[#E2E8F0]">{marketSentiment.fngValue}</span>
-              <span className={`text-[10px] uppercase font-bold flex items-center gap-1 ${
-                Number(marketSentiment.fngValue) <= 45 ? 'text-rose-500' : Number(marketSentiment.fngValue) >= 55 ? 'text-emerald-500' : 'text-amber-500'
-              }`}>
+              <span className={`text-[10px] uppercase font-bold flex items-center gap-1 ${fngColor}`}>
                 {marketSentiment.fngLabel} 
-                <span className="hidden sm:inline">
-                  {Number(marketSentiment.fngValue) <= 45 ? '(Down)' : Number(marketSentiment.fngValue) >= 55 ? '(Up)' : ''}
-                </span>
+                {fngDirection && (
+                  <span className="hidden sm:inline">
+                    {fngDirection}
+                  </span>
+                )}
               </span>
             </div>
           )}
@@ -60,18 +77,18 @@ export default function Header({ currentTime, marketSession, marketSentiment, lu
           {/* Badge 2: L/S Ratio */}
           {marketSentiment?.lsRatio && (
             <div className="flex items-center gap-2 text-[#94A3B8] bg-[#111419] border border-[#2D3139] rounded px-3 py-2">
-              {Number(marketSentiment.lsRatio) > 1 ? (
+              {isLongHeavy ? (
                 <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
               ) : (
                 <TrendingDown className="w-3.5 h-3.5 text-rose-500" />
               )}
               <span className="font-semibold text-[#E2E8F0]">L/S {marketSentiment.lsRatio}</span>
-              <span className={`text-[10px] uppercase font-bold ${Number(marketSentiment.lsRatio) > 1 ? 'text-emerald-500' : 'text-rose-500'}`}>
+              <span className={`text-[10px] uppercase font-bold ${lsColor}`}>
                 <span className="hidden sm:inline">
-                  {Number(marketSentiment.lsRatio) > 1 ? '(Long Heavy)' : '(Short Heavy)'}
+                  {lsLabelDesktop}
                 </span>
                 <span className="inline sm:hidden">
-                  {Number(marketSentiment.lsRatio) > 1 ? '(L)' : '(S)'}
+                  {lsLabelMobile}
                 </span>
               </span>
             </div>
